@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: campusos_db
+    environment:
+      POSTGRES_USER: campusos_user
+      POSTGRES_PASSWORD: campusos_password
+      POSTGRES_DB: campusos_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Backend can be run locally via uvicorn, or dockerized later.
+  # For now we'll just define the DB.
+
+volumes:
+  postgres_data:

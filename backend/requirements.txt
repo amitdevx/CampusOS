@@ -1,0 +1,10 @@
+fastapi[standard]
+sqlalchemy
+pydantic
+pydantic-settings
+alembic
+psycopg2-binary
+passlib[argon2]
+python-jose[cryptography]
+websockets
+APScheduler
