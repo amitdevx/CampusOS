@@ -23,7 +23,8 @@ A zero-cost-dependency college management system.
 
 3. Start the backend:
    ```bash
-   cd backend
-   pip install -r requirements.txt
-   uvicorn app.main:app --reload
+   ./run-backend.sh
    ```
+
+## Deployment
+Please see the [Deployment & Setup Guide](DEPLOYMENT.md) for step-by-step instructions on hosting the backend, web app, and generating the mobile APK for free.
