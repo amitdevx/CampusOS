@@ -10,5 +10,6 @@
   },
   "devDependencies": {
     "turbo": "latest"
-  }
+  },
+  "packageManager": "pnpm@11.6.0"
 }
