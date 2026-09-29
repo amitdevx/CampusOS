@@ -27,8 +27,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://campus-os-web-wgiw.vercel.app"
-    ], 
+        "https://campus-os-web-wgiw.vercel.app",
+        "https://campus-os-chi-eight.vercel.app"
+    ],
+    allow_origin_regex=r"https://campus-os-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
