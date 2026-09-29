@@ -1,8 +1,8 @@
 # Phase 4 — Real-Time
 
-- [ ] WebSockets
-- [ ] Notification center
+- [x] WebSockets
+- [x] Notification center
 - [ ] Web Push
 - [ ] Mobile notifications
 - [ ] Deep links
-- [ ] Real-time timetable updates
+- [x] Real-time timetable updates

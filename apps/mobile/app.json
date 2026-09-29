@@ -1,8 +1,10 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "CampusOS",
+    "slug": "campusos-mobile",
     "version": "1.0.0",
+    "scheme": "campusos",
+    "plugins": ["expo-router"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-from .api import auth, users, academic, timetable, attendance, evaluations, campus
+from .api import auth, users, academic, timetable, attendance, evaluations, campus, notifications, websockets, intelligence, engineering
 from .core.database import engine, Base
 
 # Create database tables automatically
@@ -17,6 +17,10 @@ app.include_router(timetable.router, prefix="/api/v1/timetable", tags=["timetabl
 app.include_router(attendance.router, prefix="/api/v1/attendance", tags=["attendance"])
 app.include_router(evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"])
 app.include_router(campus.router, prefix="/api/v1/campus", tags=["campus"])
+app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
+app.include_router(intelligence.router, prefix="/api/v1/intelligence", tags=["intelligence"])
+app.include_router(engineering.router, prefix="/api/v1/engineering", tags=["engineering"])
+app.include_router(websockets.router, tags=["websockets"])
 
 # CORS setup
 app.add_middleware(

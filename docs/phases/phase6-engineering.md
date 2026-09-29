@@ -1,7 +1,7 @@
 # Phase 6 — Engineering
 
-- [ ] Security hardening
-- [ ] Audit logs
+- [x] Security hardening
+- [x] Audit logs
 - [ ] Offline cache
 - [ ] Testing
 - [ ] CI/CD

@@ -1,7 +1,7 @@
 # Phase 5 — Intelligence
 
-- [ ] Search
-- [ ] Analytics
-- [ ] Attendance insights
-- [ ] Performance insights
+- [x] Search
+- [x] Analytics
+- [x] Attendance insights
+- [x] Performance insights
 - [ ] Optional AI assistant
