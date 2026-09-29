@@ -43,10 +43,36 @@ export const getMySchedule = async () => {
   return response.data;
 };
 
+export const getClasses = async () => {
+  const response = await apiClient.get('/api/v1/timetable/');
+  return response.data;
+};
+
+export const createClass = async (data: any) => {
+  const response = await apiClient.post('/api/v1/timetable/', data);
+  return response.data;
+};
+
 // Events API
 export const getEvents = async () => {
-  // We didn't build an explicit GET /events yet, but let's assume it or we can fetch them. 
-  // Let's comment this out until we need it, or we'll just mock events on UI for now to stay focused on auth.
+  const response = await apiClient.get('/api/v1/campus/events');
+  return response.data;
+};
+
+export const createEvent = async (data: any) => {
+  const response = await apiClient.post('/api/v1/campus/events', data);
+  return response.data;
+};
+
+// Attendance API
+export const startAttendanceSession = async (class_session_id: number) => {
+  const response = await apiClient.post('/api/v1/attendance/sessions', { class_session_id });
+  return response.data;
+};
+
+export const markAttendance = async (session_id: number, qr_code_secret: string) => {
+  const response = await apiClient.post(`/api/v1/attendance/sessions/${session_id}/scan`, { qr_code_secret });
+  return response.data;
 };
 
 // Intelligence API

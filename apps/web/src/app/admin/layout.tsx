@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { setAuthToken } from '@campusos/api-client';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -28,6 +30,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <div className="min-h-screen flex items-center justify-center text-black">Loading...</div>;
   }
 
+  const links = [
+    { name: 'Dashboard', path: '/admin' },
+    { name: 'Events', path: '/admin/events' },
+    { name: 'Timetable', path: '/admin/timetable' },
+    { name: 'Attendance QR', path: '/admin/qr' },
+    { name: 'Users', path: '/admin/users' },
+  ];
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -37,10 +47,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">Admin Portal</p>
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">
-          <a href="/admin" className="block px-4 py-2 rounded-md bg-gray-800 text-white">Dashboard</a>
-          <a href="#" className="block px-4 py-2 rounded-md text-gray-300 hover:bg-gray-800 hover:text-white">Departments</a>
-          <a href="#" className="block px-4 py-2 rounded-md text-gray-300 hover:bg-gray-800 hover:text-white">Users</a>
-          <a href="#" className="block px-4 py-2 rounded-md text-gray-300 hover:bg-gray-800 hover:text-white">Timetable</a>
+          {links.map((link) => (
+            <Link 
+              key={link.name} 
+              href={link.path}
+              className={`block px-4 py-2 rounded-md ${
+                pathname === link.path 
+                  ? 'bg-gray-800 text-white' 
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }`}
+            >
+              {link.name}
+            </Link>
+          ))}
         </nav>
         <div className="p-4 border-t border-gray-700">
           <button 
@@ -55,7 +74,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm z-10 py-4 px-6">
-          <h2 className="text-xl font-semibold text-gray-800">Admin Dashboard</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            {links.find((l) => l.path === pathname)?.name || 'Admin Dashboard'}
+          </h2>
         </header>
         <main className="flex-1 overflow-auto p-6 bg-gray-50 text-black">
           {children}

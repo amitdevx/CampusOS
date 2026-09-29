@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { login, setAuthToken } from '@campusos/api-client';
+import { login, setAuthToken, getMe } from '@campusos/api-client';
 
 interface Props {
   navigation: any;
@@ -35,7 +35,11 @@ export default function LoginScreen({ navigation }: Props) {
       const data = await login(email.toLowerCase(), password);
       await SecureStore.setItemAsync('userToken', data.access_token);
       setAuthToken(data.access_token);
-      navigation.replace('Main');
+      
+      const user = await getMe();
+      await SecureStore.setItemAsync('userRole', user.role);
+
+      navigation.replace('Main', { role: user.role });
     } catch (err: any) {
       const message =
         err?.response?.data?.detail || 'Login failed. Check your credentials.';

@@ -17,13 +17,17 @@ router = APIRouter()
 # --- Events ---
 @router.post("/events", response_model=EventResponse)
 def create_event(event: EventCreate, db: SessionDep, current_user: CurrentUser):
-    if current_user.role not in ["FACULTY", "ADMIN"]:
+    if current_user.role not in ["FACULTY", "ADMIN", "SUPER_ADMIN"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     db_event = Event(**event.model_dump(), organizer_id=current_user.id)
     db.add(db_event)
     db.commit()
     db.refresh(db_event)
     return db_event
+
+@router.get("/events", response_model=List[EventResponse])
+def get_events(db: SessionDep, current_user: CurrentUser):
+    return db.query(Event).order_by(Event.event_date.asc()).all()
 
 @router.post("/events/register", response_model=EventRegistrationResponse)
 def register_event(reg: EventRegistrationCreate, db: SessionDep, current_user: CurrentUser):

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getAnalytics } from '@campusos/api-client';
+import Link from 'next/link';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -60,18 +61,18 @@ export default function AdminDashboardPage() {
       <div className="bg-white shadow rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
-            + Create User
-          </button>
-          <button className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
+          <Link href="/admin/users" className="block text-center px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
+            + Manage Users
+          </Link>
+          <Link href="/admin/timetable" className="block text-center px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
             + Schedule Class
-          </button>
-          <button className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
-            + Post Notice
-          </button>
-          <button className="px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
-            + Generate Report
-          </button>
+          </Link>
+          <Link href="/admin/events" className="block text-center px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
+            + Create Event
+          </Link>
+          <Link href="/admin/qr" className="block text-center px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
+            + Generate Attendance QR
+          </Link>
         </div>
       </div>
     </div>
