@@ -1,6 +1,4 @@
 import { Tabs } from 'expo-router';
-// Expo router provides basic icons or we can use FontAwesome/Ionicons
-// Since this is a lightweight setup, we'll just use text labels for now if icons aren't installed
 
 export default function TabLayout() {
   return (
@@ -9,10 +7,19 @@ export default function TabLayout() {
     }}>
       <Tabs.Screen
         name="home"
-        options={{
-          title: 'Home',
-          headerTitle: 'CampusOS',
-        }}
+        options={{ title: 'Home', headerTitle: 'Dashboard' }}
+      />
+      <Tabs.Screen
+        name="classes"
+        options={{ title: 'Classes', headerTitle: 'Timetable' }}
+      />
+      <Tabs.Screen
+        name="events"
+        options={{ title: 'Events', headerTitle: 'Campus Events' }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{ title: 'Profile', headerTitle: 'My Profile' }}
       />
     </Tabs>
   );
