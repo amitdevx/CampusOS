@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SecureStore from 'expo-secure-store';
+import { login, setAuthToken } from '@campusos/api-client';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -23,14 +25,18 @@ export default function LoginScreen() {
     setError('');
 
     try {
-      // TODO: Connect this to our real FastAPI backend later using api-client
-      // Simulating network request for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call our FastAPI backend!
+      const data = await login(email.toLowerCase(), password);
       
-      // Navigate to main tabs upon "success"
+      // Save token securely
+      await SecureStore.setItemAsync('userToken', data.access_token);
+      setAuthToken(data.access_token);
+      
+      // Navigate to main tabs
       router.replace('/(tabs)/home');
-    } catch (err) {
-      setError('Invalid credentials');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.detail || 'Invalid email or password');
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@campusos/api-client": "workspace:*",
     "@react-navigation/bottom-tabs": "^7.19.2",
     "@react-navigation/native": "^7.4.1",
     "expo": "~57.0.25",
