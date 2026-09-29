@@ -35,10 +35,14 @@ jobs:
 
       - name: Prebuild Android project
         working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_URL: https://campusos-api-3r6a.onrender.com
         run: npx expo prebuild --platform android --clean
 
       - name: Build APK (Release)
         working-directory: apps/mobile/android
+        env:
+          EXPO_PUBLIC_API_URL: https://campusos-api-3r6a.onrender.com
         run: ./gradlew assembleRelease
 
       - name: Upload APK Artifact
