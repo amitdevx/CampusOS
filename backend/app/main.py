@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-from .api import auth, users
+from .api import auth, users, academic, timetable
 from .core.database import engine, Base
 
 # Create database tables automatically
@@ -12,6 +12,8 @@ app = FastAPI(title="CampusOS API", version="1.0.0")
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
+app.include_router(academic.router, prefix="/api/v1/academic", tags=["academic"])
+app.include_router(timetable.router, prefix="/api/v1/timetable", tags=["timetable"])
 
 # CORS setup
 app.add_middleware(
