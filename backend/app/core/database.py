@@ -11,8 +11,11 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
 )
 
 # Render / Supabase requires postgresql:// instead of postgres://
+# For SQLAlchemy with psycopg2, we need postgresql+psycopg2://
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 # Check if using SQLite to add specific args
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
