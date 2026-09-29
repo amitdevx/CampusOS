@@ -7,7 +7,10 @@ app = FastAPI(title="CampusOS API", version="1.0.0")
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this
+    allow_origins=[
+        "http://localhost:3000",
+        "https://campus-os-web-wgiw.vercel.app"
+    ], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
