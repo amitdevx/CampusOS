@@ -48,3 +48,9 @@ export const getEvents = async () => {
   // We didn't build an explicit GET /events yet, but let's assume it or we can fetch them. 
   // Let's comment this out until we need it, or we'll just mock events on UI for now to stay focused on auth.
 };
+
+// Intelligence API
+export const getAnalytics = async () => {
+  const response = await apiClient.get('/api/v1/intelligence/analytics');
+  return response.data;
+};
