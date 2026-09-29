@@ -1,9 +1,9 @@
 # Phase 3 — Campus
 
-- [ ] Events
-- [ ] Event registration
-- [ ] Resource management
-- [ ] Booking
-- [ ] Notices
+- [x] Events
+- [x] Event registration
+- [x] Resource management
+- [x] Booking
+- [x] Notices
 - [ ] Documents
 - [ ] Certificates

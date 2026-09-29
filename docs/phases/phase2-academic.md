@@ -5,8 +5,8 @@
 - [x] Subjects
 - [x] Classes
 - [x] Timetable
-- [ ] Attendance
-- [ ] QR attendance
-- [ ] Assignments
-- [ ] Exams
-- [ ] Marks
+- [x] Attendance
+- [x] QR attendance
+- [x] Assignments
+- [x] Exams
+- [x] Marks
