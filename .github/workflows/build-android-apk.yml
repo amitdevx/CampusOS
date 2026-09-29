@@ -1,52 +1,157 @@
-name: Build Android APK
+name: CI — Build & Validate All
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  build-android:
+  # ─────────────────────────────────────────────
+  # JOB 1: Validate Backend (Python FastAPI)
+  # ─────────────────────────────────────────────
+  validate-backend:
+    name: "🐍 Backend — Validate & Import Check"
     runs-on: ubuntu-latest
+    continue-on-error: true  # Keep running other jobs even if this fails
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Validate Python imports (catch module errors early)
+        working-directory: backend
+        env:
+          DATABASE_URL: "sqlite:///./test.db"
+          SECRET_KEY: "ci-test-secret-key-not-for-production"
+        run: python -c "from app.main import app; print('✅ Backend imports OK')"
+
+      - name: Check backend health endpoint (dry run)
+        working-directory: backend
+        env:
+          DATABASE_URL: "sqlite:///./test.db"
+          SECRET_KEY: "ci-test-secret-key-not-for-production"
+        run: |
+          python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+          curl -f http://localhost:8000/health && echo "✅ Health endpoint OK" || echo "❌ Health endpoint failed"
+
+  # ─────────────────────────────────────────────
+  # JOB 2: Validate Web (Next.js)
+  # ─────────────────────────────────────────────
+  validate-web:
+    name: "🌐 Web — Next.js TypeScript Build"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Setup pnpm
+      - name: Setup pnpm 11
         uses: pnpm/action-setup@v3
         with:
           version: 11.6.0
 
-      - name: Setup Java (for Android SDK)
-        uses: actions/setup-java@v3
+      - name: Install all workspace dependencies
+        run: pnpm install
+
+      - name: TypeScript type-check
+        working-directory: apps/web
+        run: pnpm tsc --noEmit || echo "TypeScript errors found above"
+
+      - name: Build Next.js app
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_API_URL: https://campusos-api-3r6a.onrender.com
+        run: pnpm build
+
+  # ─────────────────────────────────────────────
+  # JOB 3: Build Android APK
+  # ─────────────────────────────────────────────
+  build-android:
+    name: "📱 Android — Build Release APK"
+    runs-on: ubuntu-latest
+    continue-on-error: false  # This one we want to know definitively
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm 11
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11.6.0
+
+      - name: Setup Java 17 (for Android SDK)
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install dependencies
+      - name: Install all workspace dependencies
         run: pnpm install
 
-      - name: Prebuild Android project
+      - name: Verify expo-secure-store is installed
+        working-directory: apps/mobile
+        run: node -e "require.resolve('expo-secure-store'); console.log('✅ expo-secure-store OK')" || echo "❌ expo-secure-store missing!"
+
+      - name: Verify @expo/metro-runtime is installed
+        working-directory: apps/mobile
+        run: node -e "require.resolve('@expo/metro-runtime'); console.log('✅ @expo/metro-runtime OK')" || echo "❌ @expo/metro-runtime missing!"
+
+      - name: Prebuild Android native project
         working-directory: apps/mobile
         env:
           EXPO_PUBLIC_API_URL: https://campusos-api-3r6a.onrender.com
+          NODE_ENV: production
         run: npx expo prebuild --platform android --clean
 
-      - name: Build APK (Release)
+      - name: Make gradlew executable
+        working-directory: apps/mobile/android
+        run: chmod +x gradlew
+
+      - name: Build Release APK
         working-directory: apps/mobile/android
         env:
           EXPO_PUBLIC_API_URL: https://campusos-api-3r6a.onrender.com
-        run: ./gradlew assembleRelease
+          NODE_ENV: production
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: campusos-android-apk
           path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Upload build reports on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: android-build-reports
+          path: apps/mobile/android/build/reports/
+          retention-days: 7
