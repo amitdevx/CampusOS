@@ -108,8 +108,7 @@ jobs:
         working-directory: apps/mobile
         run: |
           node -e "require.resolve('expo-secure-store'); console.log('expo-secure-store resolved')"
-          node -e "require.resolve('@expo/metro-runtime'); console.log('@expo/metro-runtime resolved')"
-          node -e "require.resolve('whatwg-fetch'); console.log('whatwg-fetch resolved')"
+          node -e "require.resolve('@react-navigation/native'); console.log('@react-navigation/native resolved')"
 
       - name: Prebuild Android native project
         working-directory: apps/mobile
