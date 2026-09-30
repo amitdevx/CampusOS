@@ -2,10 +2,13 @@ import os
 import sys
 from sqlalchemy import text
 from sqlalchemy.exc import DataError, StatementError
+
+from app.core.database import SessionLocal, engine
+from app.models.user import User, UserRole, StudentProfile, StaffProfile
+from app.models.academic import Subject, Department, Course, Batch, Division, Enrollment
 from app.models.timetable import ClassSession
-from app.models.academic import StudentProfile, StaffProfile, Subject, Department, Course, Batch, Division, Enrollment
-from app.core.database import SessionLocal
-from app.models.user import User, UserRole
+from app.models.attendance import AttendanceSession, AttendanceRecord
+
 from app.core.security import get_password_hash
 
 db = SessionLocal()
@@ -34,7 +37,6 @@ for r in roles_data:
     except (DataError, StatementError) as e:
         db.rollback()
         print(f"Fallback to lowercase raw SQL for {r['email']} due to older schema enum definition.")
-        # Attempt raw insert to bypass python Enum validation and insert lowercase
         raw_sql = text("INSERT INTO users (email, hashed_password, full_name, role) VALUES (:email, :hashed_password, :full_name, :role)")
         try:
             db.execute(raw_sql, {
