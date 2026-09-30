@@ -8,3 +8,4 @@ passlib[argon2]
 python-jose[cryptography]
 websockets
 APScheduler
+alembic==1.13.1

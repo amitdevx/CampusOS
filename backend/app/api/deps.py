@@ -47,3 +47,27 @@ def get_current_active_admin(current_user: CurrentUser) -> User:
             detail="The user doesn't have enough privileges"
         )
     return current_user
+
+def get_current_teacher_or_admin(current_user: CurrentUser) -> User:
+    if current_user.role not in ["TEACHER", "FACULTY", "ADMIN", "SUPER_ADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="The user doesn't have enough privileges"
+        )
+    return current_user
+
+def get_current_faculty_or_admin(current_user: CurrentUser) -> User:
+    if current_user.role not in ["FACULTY", "ADMIN", "SUPER_ADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="The user doesn't have enough privileges"
+        )
+    return current_user
+
+def get_current_student(current_user: CurrentUser) -> User:
+    if current_user.role != "STUDENT":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="The user doesn't have enough privileges"
+        )
+    return current_user

@@ -21,15 +21,23 @@ if not dept:
     db.commit()
     db.refresh(dept)
 
+# Create Course
+course = db.query(Course).filter_by(name="B.Tech Computer Science").first()
+if not course:
+    course = Course(name="B.Tech Computer Science", department_id=dept.id)
+    db.add(course)
+    db.commit()
+    db.refresh(course)
+
 # Create Subjects
 sub1 = db.query(Subject).filter_by(code="CS101").first()
 if not sub1:
-    sub1 = Subject(name="Introduction to CS", code="CS101", department_id=dept.id, credits=3)
+    sub1 = Subject(name="Introduction to CS", code="CS101", semester=1, course_id=course.id)
     db.add(sub1)
     
 sub2 = db.query(Subject).filter_by(code="CS201").first()
 if not sub2:
-    sub2 = Subject(name="Data Structures", code="CS201", department_id=dept.id, credits=4)
+    sub2 = Subject(name="Data Structures", code="CS201", semester=2, course_id=course.id)
     db.add(sub2)
     
 db.commit()

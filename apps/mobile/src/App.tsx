@@ -17,9 +17,7 @@ import ProfileScreen from './screens/ProfileScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function TabNavigator({ route }: any) {
-  const role = route?.params?.role || 'STUDENT';
-
+function StudentNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -29,27 +27,54 @@ function TabNavigator({ route }: any) {
         tabBarIcon: ({ color, size }) => {
           if (route.name === 'Home') return <Home color={color} size={size} />;
           if (route.name === 'Classes') return <BookOpen color={color} size={size} />;
-          if (route.name === 'Events') return <Calendar color={color} size={size} />;
           if (route.name === 'Scan QR') return <Scan color={color} size={size} />;
-          if (route.name === 'Generate QR') return <Scan color={color} size={size} />;
+          if (route.name === 'Events') return <Calendar color={color} size={size} />;
           if (route.name === 'Profile') return <User color={color} size={size} />;
         },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Classes" component={ClassesScreen} />
-      
-      {/* Hide Scan QR if user is FACULTY or ADMIN (they shouldn't be marking attendance) */}
-      {role === 'STUDENT' ? (
-        <Tab.Screen name="Scan QR" component={ScanScreen} />
-      ) : (
-        <Tab.Screen name="Generate QR" component={GenerateQRScreen} />
-      )}
-      
+      <Tab.Screen name="Scan QR" component={ScanScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
+}
+
+function TeacherNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: '#0d9488',
+        tabBarInactiveTintColor: '#6b7280',
+        tabBarIcon: ({ color, size }) => {
+          if (route.name === 'Home') return <Home color={color} size={size} />;
+          if (route.name === 'Classes') return <BookOpen color={color} size={size} />;
+          if (route.name === 'Generate QR') return <Scan color={color} size={size} />;
+          if (route.name === 'Events') return <Calendar color={color} size={size} />;
+          if (route.name === 'Profile') return <User color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Classes" component={ClassesScreen} />
+      <Tab.Screen name="Generate QR" component={GenerateQRScreen} />
+      <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
+function MainNavigator({ route }: any) {
+  const role = route?.params?.role || 'STUDENT';
+
+  if (role === 'TEACHER' || role === 'FACULTY' || role === 'ADMIN' || role === 'SUPER_ADMIN') {
+    return <TeacherNavigator />;
+  }
+  
+  return <StudentNavigator />;
 }
 
 export default function App() {
@@ -58,7 +83,7 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen name="Main" component={MainNavigator} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="auto" />

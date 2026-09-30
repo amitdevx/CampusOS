@@ -7,6 +7,7 @@ class ClassSession(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     subject_id = Column(Integer, ForeignKey("subjects.id"))
+    division_id = Column(Integer, ForeignKey("divisions.id"), nullable=True) # Which batch/division is this class for
     room = Column(String, nullable=False)
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
@@ -15,3 +16,4 @@ class ClassSession(Base):
     
     teacher = relationship("User", back_populates="classes")
     subject_ref = relationship("Subject", back_populates="classes")
+    division = relationship("Division", back_populates="classes")

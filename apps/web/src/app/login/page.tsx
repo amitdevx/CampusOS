@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { login, setAuthToken } from '@campusos/api-client';
+import { login, setAuthToken, getMe } from '@campusos/api-client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,10 +18,24 @@ export default function LoginPage() {
 
     try {
       const data = await login(email.toLowerCase(), password);
-      // In Next.js, we might store this in a cookie or localStorage
-      localStorage.setItem('adminToken', data.access_token);
+      // Store standard userToken
+      localStorage.setItem('userToken', data.access_token);
       setAuthToken(data.access_token);
-      router.push('/admin');
+      
+      // Fetch role
+      const user = await getMe();
+      localStorage.setItem('userRole', user.role);
+      
+      // Route based on role
+      if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+        router.push('/admin');
+      } else if (user.role === 'FACULTY') {
+        router.push('/faculty');
+      } else if (user.role === 'STUDENT') {
+        router.push('/student');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.detail || 'Invalid email or password');
