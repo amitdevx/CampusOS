@@ -60,3 +60,13 @@ def read_users_me(current_user: CurrentUser) -> Any:
     Get current user profile.
     """
     return current_user
+
+from typing import List
+from .deps import get_current_active_admin
+
+@router.get("/users", response_model=List[UserResponse])
+def get_all_users(db: SessionDep, admin=Depends(get_current_active_admin)) -> Any:
+    """
+    Get all users (Admin only)
+    """
+    return db.query(User).all()

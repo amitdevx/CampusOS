@@ -37,6 +37,11 @@ export const getMe = async () => {
   return response.data;
 };
 
+export const getUsers = async () => {
+  const response = await apiClient.get('/api/v1/auth/users');
+  return response.data;
+};
+
 // Timetable API
 export const getMySchedule = async () => {
   const response = await apiClient.get('/api/v1/timetable/my-schedule');
@@ -78,5 +83,36 @@ export const markAttendance = async (session_id: number, qr_code_secret: string)
 // Intelligence API
 export const getAnalytics = async () => {
   const response = await apiClient.get('/api/v1/intelligence/analytics');
+  return response.data;
+};
+
+// Evaluations API
+export const getAssignments = async () => {
+  const response = await apiClient.get('/api/v1/evaluations/assignments');
+  return response.data;
+};
+
+export const getExams = async () => {
+  const response = await apiClient.get('/api/v1/evaluations/exams');
+  return response.data;
+};
+
+export const createAssignment = async (data: any) => {
+  const response = await apiClient.post('/api/v1/evaluations/assignments', data);
+  return response.data;
+};
+
+export const submitAssignment = async (assignment_id: number, data: any) => {
+  const response = await apiClient.post(`/api/v1/evaluations/assignments/${assignment_id}/submit`, data);
+  return response.data;
+};
+
+export const gradeSubmission = async (assignment_id: number, submission_id: number, data: any) => {
+  const response = await apiClient.post(`/api/v1/evaluations/assignments/${assignment_id}/submissions/${submission_id}/grade`, data);
+  return response.data;
+};
+
+export const postExamMarks = async (exam_id: number, marks: any[]) => {
+  const response = await apiClient.post(`/api/v1/evaluations/exams/${exam_id}/marks`, marks);
   return response.data;
 };

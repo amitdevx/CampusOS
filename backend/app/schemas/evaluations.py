@@ -50,3 +50,18 @@ class ExamResponse(ExamBase):
     id: int
     class Config:
         from_attributes = True
+
+# ExamMark
+class ExamMarkBase(BaseModel):
+    student_id: int
+    marks_obtained: int
+
+class ExamMarkCreate(ExamMarkBase):
+    pass
+
+class ExamMarkResponse(ExamMarkBase):
+    id: int
+    exam_id: int
+    class Config:
+        from_attributes = True
+
