@@ -76,7 +76,7 @@ export const startAttendanceSession = async (class_session_id: number) => {
 };
 
 export const markAttendance = async (session_id: number, qr_code_secret: string) => {
-  const response = await apiClient.post(`/api/v1/attendance/sessions/${session_id}/scan`, { qr_code_secret });
+  const response = await apiClient.post(`/api/v1/api/v1/attendance/sessions/${session_id}/scan`, { qr_code_secret });
   return response.data;
 };
 
@@ -118,17 +118,17 @@ export const postExamMarks = async (exam_id: number, marks: any[]) => {
 };
 
 export const closeAttendanceSession = async (sessionId: number) => {
-  const response = await apiClient.post(`/attendance/sessions/${sessionId}/close`);
+  const response = await apiClient.post(`/api/v1/attendance/sessions/${sessionId}/close`);
   return response.data;
 };
 
 export const getResources = async () => {
-  const response = await apiClient.get('/campus/resources');
+  const response = await apiClient.get('/api/v1/campus/resources');
   return response.data;
 };
 
 export const bookResource = async (resourceId: number, startTime: string, endTime: string) => {
-  const response = await apiClient.post('/campus/bookings', {
+  const response = await apiClient.post('/api/v1/campus/bookings', {
     resource_id: resourceId,
     start_time: startTime,
     end_time: endTime
@@ -137,6 +137,6 @@ export const bookResource = async (resourceId: number, startTime: string, endTim
 };
 
 export const getMyBookings = async () => {
-  const response = await apiClient.get('/campus/my-bookings');
+  const response = await apiClient.get('/api/v1/campus/my-bookings');
   return response.data;
 };
