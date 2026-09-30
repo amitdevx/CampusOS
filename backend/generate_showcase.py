@@ -5,13 +5,14 @@ import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
 
+from sqlalchemy import text
+from sqlalchemy.exc import DataError, StatementError
 from app.core.database import SessionLocal
 from app.models.user import User, UserRole, StudentProfile, StaffProfile
 from app.models.academic import Department, Course, Batch, Division, Enrollment, Subject
 from app.models.timetable import ClassSession
 from app.models.campus import Event, Resource, Notice
 from app.core.security import get_password_hash
-from sqlalchemy.exc import IntegrityError
 
 db = SessionLocal()
 
@@ -23,13 +24,41 @@ def get_name():
 
 print("Starting Showcase Data Generation...")
 
-# 1. Check if already heavily populated
-student_count = db.query(User).filter(User.role == "STUDENT").count()
+student_count = db.query(User).filter(User.role.in_(["STUDENT", "student"])).count()
 if student_count > 10:
     print("Database already has many students. Skipping showcase generation to prevent duplicates.")
     sys.exit(0)
 
 default_pass = get_password_hash("campusos2026")
+
+def safe_create_user(email, name, role_upper, role_lower, password):
+    user = db.query(User).filter_by(email=email).first()
+    if user:
+        return user
+    try:
+        new_user = User(
+            email=email,
+            hashed_password=password,
+            full_name=name,
+            role=role_upper
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+    except (DataError, StatementError):
+        db.rollback()
+        raw_sql = text("INSERT INTO users (email, hashed_password, full_name, role) VALUES (:email, :hashed_password, :full_name, :role) RETURNING id")
+        result = db.execute(raw_sql, {
+            "email": email,
+            "hashed_password": password,
+            "full_name": name,
+            "role": role_lower
+        })
+        new_id = result.scalar()
+        db.commit()
+        return db.query(User).filter_by(id=new_id).first()
+
 admin_user = db.query(User).filter_by(email="admin@campusos.com").first()
 admin_id = admin_user.id if admin_user else 1
 
@@ -63,12 +92,10 @@ teachers = []
 for i in range(1, 6):
     name = get_name()
     email = f"prof{i}@kpgcollege.edu.in"
-    t = db.query(User).filter_by(email=email).first()
-    if not t:
-        t = User(email=email, hashed_password=default_pass, full_name=name, role="TEACHER")
-        db.add(t)
-        db.commit()
-        db.refresh(t)
+    t = safe_create_user(email, name, "TEACHER", "teacher", default_pass)
+    
+    profile = db.query(StaffProfile).filter_by(user_id=t.id).first()
+    if not profile:
         db.add(StaffProfile(user_id=t.id, employee_id=f"EMP100{i}", designation="Assistant Professor"))
         db.commit()
     teachers.append(t)
@@ -86,6 +113,7 @@ subject_names = {
 
 for course in courses:
     dept = db.query(Department).filter_by(id=course.department_id).first()
+    if not dept: continue
     
     # Batch
     batch_name = "2024-2027"
@@ -107,13 +135,13 @@ for course in courses:
 
     # Subjects
     subs = subject_names.get(dept.name, ["General Subject 1", "General Subject 2"])
-    for s_name in subs[:3]: # assign 3 subjects per course
+    for s_name in subs[:3]:
         code = f"{dept.code}{random.randint(100,999)}"
         if not db.query(Subject).filter_by(name=s_name, course_id=course.id).first():
             db.add(Subject(name=s_name, code=code, semester=1, course_id=course.id))
 db.commit()
 
-# 5. Generate Students (about 3 per division to make it quick but populated)
+# 5. Generate Students
 student_idx = 1
 for (course, batch, div, dept) in all_divisions:
     for _ in range(3):
@@ -121,13 +149,10 @@ for (course, batch, div, dept) in all_divisions:
         email = f"student{student_idx}@kpgcollege.edu.in"
         student_idx += 1
         
-        s = db.query(User).filter_by(email=email).first()
-        if not s:
-            s = User(email=email, hashed_password=default_pass, full_name=name, role="STUDENT")
-            db.add(s)
-            db.commit()
-            db.refresh(s)
-            
+        s = safe_create_user(email, name, "STUDENT", "student", default_pass)
+        
+        profile = db.query(StudentProfile).filter_by(user_id=s.id).first()
+        if not profile:
             db.add(StudentProfile(
                 user_id=s.id,
                 enrollment_number=f"ENR2024{student_idx:04d}",
@@ -139,43 +164,43 @@ for (course, batch, div, dept) in all_divisions:
             db.commit()
 
 # 6. Generate Timetable (Classes) for today and tomorrow
-now = datetime.datetime.utcnow()
-today_start = now.replace(hour=8, minute=0, second=0, microsecond=0)
-subjects = db.query(Subject).all()
+if teachers and all_divisions:
+    now = datetime.datetime.utcnow()
+    today_start = now.replace(hour=8, minute=0, second=0, microsecond=0)
+    subjects = db.query(Subject).all()
 
-for div_info in all_divisions:
-    div_id = div_info[2].id
-    course_id = div_info[0].id
-    
-    div_subjects = [s for s in subjects if s.course_id == course_id]
-    if not div_subjects:
-        continue
+    for div_info in all_divisions:
+        div_id = div_info[2].id
+        course_id = div_info[0].id
         
-    for day_offset in [0, 1]: # Today and Tomorrow
-        for hour_offset in [1, 3]: # 9 AM and 11 AM
-            start_t = today_start + datetime.timedelta(days=day_offset, hours=hour_offset)
-            end_t = start_t + datetime.timedelta(hours=1)
+        div_subjects = [s for s in subjects if s.course_id == course_id]
+        if not div_subjects:
+            continue
             
-            t = random.choice(teachers)
-            sub = random.choice(div_subjects)
-            
-            # Check overlap
-            overlap = db.query(ClassSession).filter(
-                ClassSession.teacher_id == t.id,
-                ClassSession.start_time < end_t,
-                ClassSession.end_time > start_t
-            ).first()
-            
-            if not overlap:
-                cs = ClassSession(
-                    subject_id=sub.id,
-                    division_id=div_id,
-                    room=f"Room {random.randint(101, 305)}",
-                    start_time=start_t,
-                    end_time=end_t,
-                    teacher_id=t.id
-                )
-                db.add(cs)
+        for day_offset in [0, 1]:
+            for hour_offset in [1, 3]:
+                start_t = today_start + datetime.timedelta(days=day_offset, hours=hour_offset)
+                end_t = start_t + datetime.timedelta(hours=1)
+                
+                t = random.choice(teachers)
+                sub = random.choice(div_subjects)
+                
+                overlap = db.query(ClassSession).filter(
+                    ClassSession.teacher_id == t.id,
+                    ClassSession.start_time < end_t,
+                    ClassSession.end_time > start_t
+                ).first()
+                
+                if not overlap:
+                    cs = ClassSession(
+                        subject_id=sub.id,
+                        division_id=div_id,
+                        room=f"Room {random.randint(101, 305)}",
+                        start_time=start_t,
+                        end_time=end_t,
+                        teacher_id=t.id
+                    )
+                    db.add(cs)
+    db.commit()
 
-db.commit()
 print("Showcase Indian Data Generation Complete! Populated Users, Subjects, Classes, Events, and Notices.")
