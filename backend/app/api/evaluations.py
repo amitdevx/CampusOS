@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.post("/assignments", response_model=AssignmentResponse)
 def create_assignment(assignment: AssignmentCreate, db: SessionDep, current_user: CurrentUser):
-    if current_user.role not in ["FACULTY", "ADMIN"]:
+    if current_user.role not in ["FACULTY", "ADMIN", "TEACHER"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     db_assignment = Assignment(**assignment.model_dump(), teacher_id=current_user.id)
@@ -39,7 +39,7 @@ def submit_assignment(assignment_id: int, submission: SubmissionCreate, db: Sess
 
 @router.post("/exams", response_model=ExamResponse)
 def create_exam(exam: ExamCreate, db: SessionDep, current_user: CurrentUser):
-    if current_user.role not in ["FACULTY", "ADMIN"]:
+    if current_user.role not in ["FACULTY", "ADMIN", "TEACHER"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     db_exam = Exam(**exam.model_dump())

@@ -37,10 +37,8 @@ export default function TeacherAssignmentsPage() {
       await createAssignment({
         title,
         description: desc,
-        due_date: new Date(dueDate).toISOString(),
+        deadline: new Date(dueDate).toISOString(),
         subject_id: parseInt(subjectId),
-        batch_id: parseInt(batchId),
-        total_marks: 100
       });
       setTitle('');
       setDesc('');

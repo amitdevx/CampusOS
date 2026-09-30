@@ -28,9 +28,10 @@ async def start_attendance_session(session: AttendanceSessionCreate, db: Session
         raise HTTPException(status_code=403, detail="Not authorized to start attendance for another teacher's class")
     
     now = datetime.datetime.utcnow()
-    # Time window validation: Can only start 15 mins before and up to 15 mins after class
-    grace_period = datetime.timedelta(minutes=15)
-    if now < (class_session.start_time - grace_period) or now > (class_session.end_time + grace_period):
+    # Time window validation: Can only start 30 mins before and up to 90 mins after class starts
+    grace_before = datetime.timedelta(minutes=30)
+    grace_after = datetime.timedelta(minutes=90)
+    if now < (class_session.start_time - grace_before) or now > (class_session.end_time + grace_after):
         raise HTTPException(status_code=400, detail="Cannot start attendance outside the class schedule time window")
 
     # Close any currently active sessions for this class

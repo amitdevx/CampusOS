@@ -76,7 +76,7 @@ export const startAttendanceSession = async (class_session_id: number) => {
 };
 
 export const markAttendance = async (session_id: number, qr_code_secret: string) => {
-  const response = await apiClient.post(`/api/v1/api/v1/attendance/sessions/${session_id}/scan`, { qr_code_secret });
+  const response = await apiClient.post(`/api/v1/attendance/sessions/${session_id}/scan`, { qr_code_secret });
   return response.data;
 };
 
@@ -99,6 +99,11 @@ export const getExams = async () => {
 
 export const createAssignment = async (data: any) => {
   const response = await apiClient.post('/api/v1/evaluations/assignments', data);
+  return response.data;
+};
+
+export const createExam = async (data: any) => {
+  const response = await apiClient.post('/api/v1/evaluations/exams', data);
   return response.data;
 };
 
@@ -158,5 +163,53 @@ export const createUser = async (data: any) => {
 
 export const createResource = async (data: any) => {
   const response = await apiClient.post('/api/v1/campus/resources', data);
+  return response.data;
+};
+
+// Notices API
+export const getNotices = async () => {
+  const response = await apiClient.get('/api/v1/campus/notices');
+  return response.data;
+};
+
+export const createNotice = async (data: any) => {
+  const response = await apiClient.post('/api/v1/campus/notices', data);
+  return response.data;
+};
+
+// Academic API
+export const getDepartments = async () => {
+  const response = await apiClient.get('/api/v1/academic/departments');
+  return response.data;
+};
+
+export const getCourses = async () => {
+  const response = await apiClient.get('/api/v1/academic/courses');
+  return response.data;
+};
+
+export const getSubjects = async () => {
+  const response = await apiClient.get('/api/v1/academic/subjects');
+  return response.data;
+};
+
+export const getDivisions = async () => {
+  const response = await apiClient.get('/api/v1/academic/divisions');
+  return response.data;
+};
+
+export const getEnrollments = async () => {
+  const response = await apiClient.get('/api/v1/academic/enrollments');
+  return response.data;
+};
+
+// Notifications API
+export const getNotifications = async () => {
+  const response = await apiClient.get('/api/v1/notifications/');
+  return response.data;
+};
+
+export const markNotificationRead = async (id: number) => {
+  const response = await apiClient.put(`/api/v1/notifications/${id}/read`);
   return response.data;
 };

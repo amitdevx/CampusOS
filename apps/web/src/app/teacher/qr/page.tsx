@@ -2,19 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { getClasses, startAttendanceSession, closeAttendanceSession } from '@campusos/api-client';
+import { getMySchedule, startAttendanceSession, closeAttendanceSession } from '@campusos/api-client';
 import { Card, CardContent, CardHeader, CardTitle, Button, EmptyState } from '@/components/ui';
-import { QrCode, AlertCircle } from 'lucide-react';
+import { QrCode, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function TeacherQRPage() {
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [sessionData, setSessionData] = useState<any>(null);
+  const [error, setError] = useState('');
   
   useEffect(() => {
     async function load() {
       try {
-        const data = await getClasses();
+        const data = await getMySchedule();
         setClasses(data);
         if (data.length > 0) setSelectedClassId(data[0].id.toString());
       } catch (e) {
@@ -26,12 +27,13 @@ export default function TeacherQRPage() {
 
   const handleGenerate = async () => {
     if (!selectedClassId) return;
+    setError('');
     try {
       const response = await startAttendanceSession(parseInt(selectedClassId));
       setSessionData(response);
-    } catch (e) {
-      console.error(e);
-      alert('Failed to start attendance session. Are you authorized?');
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail || 'Failed to start attendance session.';
+      setError(msg);
     }
   };
 
@@ -55,7 +57,7 @@ export default function TeacherQRPage() {
                 {classes.length === 0 ? (
                   <EmptyState 
                     title="No Classes Available" 
-                    description="You have no active classes scheduled for right now." 
+                    description="You have no classes scheduled. Classes will appear here when they are assigned to you." 
                     icon={<AlertCircle size={24} />} 
                   />
                 ) : (
@@ -67,12 +69,18 @@ export default function TeacherQRPage() {
                     <option value="" disabled>Select a class...</option>
                     {classes.map(c => (
                       <option key={c.id} value={c.id.toString()}>
-                        Subject #{c.subject_id} - Room {c.room}
+                        Subject #{c.subject_id} | Room {c.room} | {new Date(c.start_time).toLocaleString()}
                       </option>
                     ))}
                   </select>
                 )}
               </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                  {error}
+                </div>
+              )}
               
               <Button 
                 onClick={handleGenerate} 
