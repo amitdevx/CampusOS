@@ -7,7 +7,7 @@ from sqlalchemy import pool
 from alembic import context
 
 # Import your models here
-from app.core.database import Base
+from app.core.database import Base, SQLALCHEMY_DATABASE_URL
 # Make sure all models are imported before this point so that Base.metadata has them
 from app.models.user import User
 from app.models.academic import Department, Course, Subject
@@ -22,9 +22,8 @@ from app.models.engineering import AuditLog
 # access to the values within the .ini file in use.
 config = context.config
 
-# Overwrite sqlalchemy.url with environment variable if present
-database_url = os.getenv("DATABASE_URL", "sqlite:///./campusos.db")
-config.set_main_option("sqlalchemy.url", database_url)
+# Overwrite sqlalchemy.url with the one parsed in database.py
+config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

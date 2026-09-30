@@ -13,7 +13,6 @@ jobs:
   validate-backend:
     name: "Backend - validate imports and health endpoint"
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout repository
@@ -27,6 +26,12 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: pip install -r requirements.txt
+
+      - name: Check database migrations dry-run
+        working-directory: backend
+        env:
+          DATABASE_URL: "sqlite:///./test.db"
+        run: alembic upgrade head
 
       - name: Validate Python module imports
         working-directory: backend
@@ -48,7 +53,6 @@ jobs:
   validate-web:
     name: "Web - typecheck and Next.js production build"
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout repository
