@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { getClasses, startAttendanceSession, closeAttendanceSession } from '@campusos/api-client';
+import { getMySchedule, startAttendanceSession, closeAttendanceSession } from '@campusos/api-client';
 
 export default function GenerateQRScreen() {
   const [classes, setClasses] = useState<any[]>([]);
@@ -12,7 +12,7 @@ export default function GenerateQRScreen() {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        const data = await getClasses();
+        const data = await getMySchedule();
         setClasses(data);
         if (data.length > 0) setSelectedClass(data[0]);
       } catch (error) {
@@ -30,7 +30,8 @@ export default function GenerateQRScreen() {
       const data = await startAttendanceSession(selectedClass.id);
       setSessionData(data);
     } catch (e: any) {
-      Alert.alert('Error', e?.response?.data?.detail || 'Failed to start session');
+      const msg = e?.response?.data?.detail || 'Failed to start session';
+      Alert.alert('Error', msg);
     }
   };
 
@@ -52,7 +53,7 @@ export default function GenerateQRScreen() {
         <View style={styles.card}>
           <Text style={styles.label}>Select Active Class</Text>
           {classes.length === 0 ? (
-            <Text style={styles.empty}>No active classes found.</Text>
+            <Text style={styles.empty}>No active classes found in your schedule.</Text>
           ) : (
             <View>
               {classes.map(c => (
@@ -63,6 +64,9 @@ export default function GenerateQRScreen() {
                 >
                   <Text style={[styles.classText, selectedClass?.id === c.id && styles.selectedText]}>
                     Subject #{c.subject_id} - Room {c.room}
+                  </Text>
+                  <Text style={[styles.timeText, selectedClass?.id === c.id && styles.selectedText]}>
+                    {new Date(c.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(c.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -108,7 +112,8 @@ const styles = StyleSheet.create({
   empty: { color: '#6b7280', fontStyle: 'italic' },
   classItem: { padding: 12, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, marginBottom: 8 },
   selectedItem: { borderColor: '#2563eb', backgroundColor: '#eff6ff' },
-  classText: { color: '#374151' },
+  classText: { color: '#374151', fontSize: 16, fontWeight: '500' },
+  timeText: { color: '#6b7280', fontSize: 13, marginTop: 4 },
   selectedText: { color: '#2563eb', fontWeight: 'bold' },
   button: { backgroundColor: '#2563eb', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 16 },
   buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
