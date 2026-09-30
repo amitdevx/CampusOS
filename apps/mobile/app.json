@@ -20,6 +20,15 @@
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
       "package": "com.anonymous.campusosmobile"
-    }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow CampusOS to access your camera to scan attendance QR codes."
+        }
+      ],
+      "expo-notifications"
+    ]
   }
 }
