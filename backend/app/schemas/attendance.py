@@ -8,12 +8,14 @@ class AttendanceSessionBase(BaseModel):
     is_active: bool = True
 
 class AttendanceSessionCreate(AttendanceSessionBase):
-    pass
+    duration_minutes: Optional[int] = 60 # Default 60 mins
 
 class AttendanceSessionResponse(AttendanceSessionBase):
     id: int
     qr_code_secret: Optional[str] = None
     created_at: datetime
+    expires_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
     class Config:
         from_attributes = True
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { getClasses, startAttendanceSession } from '@campusos/api-client';
+import { getClasses, startAttendanceSession, closeAttendanceSession } from '@campusos/api-client';
 
 export default function GenerateQRScreen() {
   const [classes, setClasses] = useState<any[]>([]);
@@ -39,9 +39,9 @@ export default function GenerateQRScreen() {
   }
 
   const qrData = sessionData ? JSON.stringify({
-    type: 'ATTENDANCE',
-    sessionId: sessionData.id,
-    secret: sessionData.qr_code_secret,
+    v: 1, type: 'ATTENDANCE',
+    session: sessionData.id,
+    token: sessionData.qr_code_secret,
   }) : '';
 
   return (
@@ -83,7 +83,14 @@ export default function GenerateQRScreen() {
           <Text style={styles.instruction}>
             Have students scan this code to mark their attendance.
           </Text>
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => setSessionData(null)}>
+          <TouchableOpacity style={styles.secondaryButton} onPress={async () => {
+            try {
+              await closeAttendanceSession(sessionData.id);
+            } catch(e) {
+              console.error(e);
+            }
+            setSessionData(null);
+          }}>
             <Text style={styles.secondaryText}>Close Session</Text>
           </TouchableOpacity>
         </View>

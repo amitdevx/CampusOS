@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship
 import datetime
 from ..core.database import Base
@@ -10,6 +10,8 @@ class AttendanceSession(Base):
     qr_code_secret = Column(String, nullable=True) # Used for dynamic QR validation
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
     
     # Relationships
     records = relationship("AttendanceRecord", back_populates="session", cascade="all, delete-orphan")
@@ -23,3 +25,7 @@ class AttendanceRecord(Base):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     
     session = relationship("AttendanceSession", back_populates="records")
+
+    __table_args__ = (
+        UniqueConstraint('session_id', 'student_id', name='uix_session_student'),
+    )

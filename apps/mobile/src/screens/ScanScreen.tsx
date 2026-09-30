@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 
@@ -24,22 +24,25 @@ export default function ScanScreen() {
     setProcessing(true);
     try {
       const parsedData = JSON.parse(data);
-      if (parsedData.type === 'ATTENDANCE' && parsedData.sessionId && parsedData.secret) {
+      const sessionId = parsedData.session || parsedData.sessionId;
+      const secret = parsedData.token || parsedData.secret;
+      
+      if (parsedData.type === 'ATTENDANCE' && sessionId && secret) {
         
-        await markAttendance(parsedData.sessionId, parsedData.secret);
+        await markAttendance(sessionId, secret);
         
         Alert.alert(
-          'Attendance Marked',
-          `Successfully checked in for Session #${parsedData.sessionId}`,
-          [{ text: 'OK', onPress: () => { setScanned(false); setProcessing(false); } }]
+          '✓ Attendance Marked',
+          `Successfully checked in for Session #${sessionId}`,
+          [{ text: 'Done', onPress: () => { setScanned(false); setProcessing(false); } }]
         );
       } else {
         throw new Error("Invalid format");
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.detail || 'Invalid or expired QR code.';
-      Alert.alert('Error', msg, [
-        { text: 'OK', onPress: () => { setScanned(false); setProcessing(false); } },
+      const msg = error?.response?.data?.detail || 'QR Code Expired or Invalid.\nAsk your teacher to generate a new one.';
+      Alert.alert('QR Error', msg, [
+        { text: 'Scan Again', onPress: () => { setScanned(false); setProcessing(false); } },
       ]);
     }
   };
@@ -47,14 +50,20 @@ export default function ScanScreen() {
   if (hasPermission === null) {
     return (
       <View style={styles.center}>
-        <Text style={styles.text}>Requesting for camera permission...</Text>
+        <Text style={styles.text}>Requesting camera permission...</Text>
       </View>
     );
   }
   if (hasPermission === false) {
     return (
       <View style={styles.center}>
-        <Text style={styles.text}>No access to camera</Text>
+        <Text style={styles.text}>Camera permission required</Text>
+        <Text style={[styles.text, { marginTop: 10, textAlign: 'center', marginHorizontal: 20 }]}>
+          CampusOS needs camera access to scan attendance QR codes.
+        </Text>
+        <TouchableOpacity style={styles.rescanButton} onPress={() => Linking.openSettings()}>
+          <Text style={styles.rescanText}>Open Settings</Text>
+        </TouchableOpacity>
       </View>
     );
   }

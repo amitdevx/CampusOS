@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 import uuid
+import datetime
 
 from .deps import SessionDep, CurrentUser, get_current_teacher_or_admin, get_current_student
 from ..models.attendance import AttendanceSession, AttendanceRecord
@@ -24,19 +25,53 @@ def start_attendance_session(session: AttendanceSessionCreate, db: SessionDep, c
     # Security: A teacher can only start a session for their own class
     if current_user.role == "TEACHER" and class_session.teacher_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to start attendance for another teacher's class")
-        
+    
+    now = datetime.datetime.utcnow()
+    # Time window validation: Can only start 15 mins before and up to 15 mins after class
+    grace_period = datetime.timedelta(minutes=15)
+    if now < (class_session.start_time - grace_period) or now > (class_session.end_time + grace_period):
+        raise HTTPException(status_code=400, detail="Cannot start attendance outside the class schedule time window")
+
+    # Close any currently active sessions for this class
+    active_sessions = db.query(AttendanceSession).filter(
+        AttendanceSession.class_session_id == session.class_session_id,
+        AttendanceSession.is_active == True
+    ).all()
+    for active_s in active_sessions:
+        active_s.is_active = False
+        active_s.closed_at = now
+    
     # Generate temporary QR secret for this session
     qr_secret = str(uuid.uuid4())
+    
+    expires_at = now + datetime.timedelta(minutes=session.duration_minutes or 60)
     
     db_session = AttendanceSession(
         class_session_id=session.class_session_id,
         is_active=True,
-        qr_code_secret=qr_secret
+        qr_code_secret=qr_secret,
+        expires_at=expires_at
     )
     db.add(db_session)
     db.commit()
     db.refresh(db_session)
     return db_session
+
+@router.post("/sessions/{session_id}/close", response_model=AttendanceSessionResponse)
+def close_attendance_session(session_id: int, db: SessionDep, current_user=Depends(get_current_teacher_or_admin)):
+    session = db.query(AttendanceSession).filter(AttendanceSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    class_session = db.query(ClassSession).filter(ClassSession.id == session.class_session_id).first()
+    if current_user.role == "TEACHER" and class_session.teacher_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    session.is_active = False
+    session.closed_at = datetime.datetime.utcnow()
+    db.commit()
+    db.refresh(session)
+    return session
 
 @router.post("/sessions/{session_id}/scan", response_model=AttendanceRecordResponse)
 def scan_qr_attendance(session_id: int, record_in: AttendanceRecordCreate, db: SessionDep, current_user=Depends(get_current_student)):
@@ -44,6 +79,13 @@ def scan_qr_attendance(session_id: int, record_in: AttendanceRecordCreate, db: S
     session = db.query(AttendanceSession).filter(AttendanceSession.id == session_id).first()
     if not session or not session.is_active:
         raise HTTPException(status_code=400, detail="Attendance session is not active or invalid")
+        
+    now = datetime.datetime.utcnow()
+    if session.expires_at and now > session.expires_at:
+        session.is_active = False
+        session.closed_at = now
+        db.commit()
+        raise HTTPException(status_code=400, detail="QR Code has expired. Please ask your teacher to generate a new one.")
         
     class_session = db.query(ClassSession).filter(ClassSession.id == session.class_session_id).first()
     if not class_session:

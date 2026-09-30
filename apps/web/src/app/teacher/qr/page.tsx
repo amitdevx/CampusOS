@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { getClasses, startAttendanceSession } from '@campusos/api-client';
+import { getClasses, startAttendanceSession, closeAttendanceSession } from '@campusos/api-client';
 import { Card, CardContent, CardHeader, CardTitle, Button, EmptyState } from '@/components/ui';
 import { QrCode, AlertCircle } from 'lucide-react';
 
@@ -36,9 +36,9 @@ export default function TeacherQRPage() {
   };
 
   const qrData = sessionData ? JSON.stringify({
-    type: 'ATTENDANCE',
-    sessionId: sessionData.id,
-    secret: sessionData.qr_code_secret,
+    v: 1, type: 'ATTENDANCE',
+    session: sessionData.id,
+    token: sessionData.qr_code_secret,
   }) : '';
 
   return (
@@ -98,7 +98,14 @@ export default function TeacherQRPage() {
                 Have students scan this QR code with their CampusOS Mobile App<br/>
                 to mark their attendance.
               </p>
-              <Button variant="danger" onClick={() => setSessionData(null)}>
+              <Button variant="danger" onClick={async () => {
+                try {
+                  await closeAttendanceSession(sessionData.id);
+                } catch(e) {
+                  console.error(e);
+                }
+                setSessionData(null);
+              }}>
                 End Session
               </Button>
             </div>

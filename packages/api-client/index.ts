@@ -116,3 +116,8 @@ export const postExamMarks = async (exam_id: number, marks: any[]) => {
   const response = await apiClient.post(`/api/v1/evaluations/exams/${exam_id}/marks`, marks);
   return response.data;
 };
+
+export const closeAttendanceSession = async (sessionId: number) => {
+  const response = await apiClient.post(`/attendance/sessions/${sessionId}/close`);
+  return response.data;
+};

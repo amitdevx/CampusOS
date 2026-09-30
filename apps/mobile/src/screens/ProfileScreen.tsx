@@ -33,6 +33,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const handleLogout = async () => {
     await SecureStore.deleteItemAsync('userToken');
+    await SecureStore.deleteItemAsync('userRole');
     setAuthToken(null);
     navigation.replace('Login');
   };
