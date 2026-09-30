@@ -31,10 +31,12 @@ export default function LoginPage() {
         router.push('/admin');
       } else if (user.role === 'FACULTY') {
         router.push('/faculty');
+      } else if (user.role === 'TEACHER') {
+        router.push('/teacher');
       } else if (user.role === 'STUDENT') {
         router.push('/student');
       } else {
-        router.push('/dashboard');
+        router.push('/');
       }
     } catch (err: any) {
       console.error(err);

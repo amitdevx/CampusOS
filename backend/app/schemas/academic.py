@@ -48,6 +48,7 @@ class SubjectResponse(SubjectBase):
 # --- Timetable / ClassSession ---
 class ClassSessionBase(BaseModel):
     subject_id: int
+    division_id: int
     room: str
     start_time: datetime
     end_time: datetime
@@ -64,8 +65,9 @@ class ClassSessionResponse(ClassSessionBase):
 # --- Batch ---
 class BatchBase(BaseModel):
     name: str
-    year: int
     course_id: int
+    start_year: int
+    end_year: int
 
 class BatchCreate(BatchBase):
     pass
@@ -91,9 +93,7 @@ class DivisionResponse(DivisionBase):
 # --- Enrollment ---
 class EnrollmentBase(BaseModel):
     student_id: int
-    batch_id: int
-    division_id: Optional[int] = None
-    roll_number: Optional[str] = None
+    division_id: int
     status: str = "ACTIVE"
 
 class EnrollmentCreate(EnrollmentBase):

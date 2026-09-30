@@ -1,3 +1,5 @@
+import { setAuthToken, getMe } from "@campusos/api-client";
+import * as SecureStore from "expo-secure-store";
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -67,23 +69,79 @@ function TeacherNavigator() {
   );
 }
 
+function StaffNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: '#7c3aed',
+        tabBarInactiveTintColor: '#6b7280',
+        tabBarIcon: ({ color, size }) => {
+          if (route.name === 'Home') return <Home color={color} size={size} />;
+          if (route.name === 'Classes') return <BookOpen color={color} size={size} />;
+          if (route.name === 'Events') return <Calendar color={color} size={size} />;
+          if (route.name === 'Profile') return <User color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Classes" component={ClassesScreen} />
+      <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
 function MainNavigator({ route }: any) {
   const role = route?.params?.role || 'STUDENT';
 
-  if (role === 'TEACHER' || role === 'FACULTY' || role === 'ADMIN' || role === 'SUPER_ADMIN') {
+  if (role === 'TEACHER') {
     return <TeacherNavigator />;
+  } else if (role === 'FACULTY' || role === 'ADMIN' || role === 'SUPER_ADMIN') {
+    return <StaffNavigator />;
   }
   
   return <StudentNavigator />;
 }
 
+
 export default function App() {
+  const [isReady, setIsReady] = React.useState(false);
+  const [initialRoute, setInitialRoute] = React.useState<'Login' | 'Main'>('Login');
+  const [initialRole, setInitialRole] = React.useState('STUDENT');
+
+  React.useEffect(() => {
+    async function restoreSession() {
+      try {
+        const token = await SecureStore.getItemAsync('userToken');
+        if (token) {
+          setAuthToken(token);
+          const user = await getMe();
+          setInitialRole(user.role);
+          setInitialRoute('Main');
+        }
+      } catch (e) {
+        // Token invalid or network error
+        await SecureStore.deleteItemAsync('userToken');
+        await SecureStore.deleteItemAsync('userRole');
+        setAuthToken(null);
+      } finally {
+        setIsReady(true);
+      }
+    }
+    restoreSession();
+  }, []);
+
+  if (!isReady) {
+    return null; // Or a splash screen component
+  }
+
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Main" component={MainNavigator} />
+          <Stack.Screen name="Main" component={MainNavigator} initialParams={{ role: initialRole }} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="auto" />

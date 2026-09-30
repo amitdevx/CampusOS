@@ -14,7 +14,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     const token = localStorage.getItem('userToken');
     const role = localStorage.getItem('userRole');
     
-    if (!token || (role !== 'TEACHER' && role !== 'FACULTY' && role !== 'ADMIN' && role !== 'SUPER_ADMIN')) {
+    if (!token || (role !== 'TEACHER')) {
       router.replace('/login');
     } else {
       setAuthToken(token);
