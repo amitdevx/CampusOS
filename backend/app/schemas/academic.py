@@ -58,6 +58,49 @@ class ClassSessionCreate(ClassSessionBase):
 
 class ClassSessionResponse(ClassSessionBase):
     id: int
-    # Can embed minimal representations for nested data if needed
     class Config:
         from_attributes = True
+
+# --- Batch ---
+class BatchBase(BaseModel):
+    name: str
+    year: int
+    course_id: int
+
+class BatchCreate(BatchBase):
+    pass
+
+class BatchResponse(BatchBase):
+    id: int
+    class Config:
+        from_attributes = True
+
+# --- Division ---
+class DivisionBase(BaseModel):
+    name: str
+    batch_id: int
+
+class DivisionCreate(DivisionBase):
+    pass
+
+class DivisionResponse(DivisionBase):
+    id: int
+    class Config:
+        from_attributes = True
+
+# --- Enrollment ---
+class EnrollmentBase(BaseModel):
+    student_id: int
+    batch_id: int
+    division_id: Optional[int] = None
+    roll_number: Optional[str] = None
+    status: str = "ACTIVE"
+
+class EnrollmentCreate(EnrollmentBase):
+    pass
+
+class EnrollmentResponse(EnrollmentBase):
+    id: int
+    class Config:
+        from_attributes = True
+
