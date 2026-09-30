@@ -21,11 +21,12 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # Safely alter the column type to VARCHAR
     # Using raw SQL because SQLAlchemy's dialect support for altering ENUM to VARCHAR varies
-    op.execute("ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(50) USING role::text")
-    # Drop the enum type if it exists to clean up
-    op.execute("DROP TYPE IF EXISTS userrole CASCADE")
+    bind = op.get_bind()
+    if bind.engine.name == 'postgresql':
+        op.execute("ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(50) USING role::text")
+        # Drop the enum type if it exists to clean up
+        op.execute("DROP TYPE IF EXISTS userrole CASCADE")
 
 
 def downgrade() -> None:
     pass
-
