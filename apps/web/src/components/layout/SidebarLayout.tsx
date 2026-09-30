@@ -20,6 +20,9 @@ interface SidebarLayoutProps {
   theme?: 'blue' | 'teal' | 'indigo' | 'gray';
 }
 
+// hook import
+import { useCampusWebSocket } from '@/hooks/useCampusWebSocket';
+
 export function SidebarLayout({
   title,
   subtitle,
@@ -30,6 +33,7 @@ export function SidebarLayout({
 }: SidebarLayoutProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { notifications } = useCampusWebSocket();
 
   const themeClasses = {
     blue: {
@@ -147,7 +151,9 @@ export function SidebarLayout({
               </div>
               <button className="relative text-gray-500 hover:text-blue-600 transition-colors">
                 <Bell size={20} />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                {notifications.length > 0 && (
+                  <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                )}
               </button>
               <div className="h-8 w-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-semibold text-sm border border-blue-200 cursor-pointer">
                 <User size={16} />

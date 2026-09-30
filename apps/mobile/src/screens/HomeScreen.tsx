@@ -12,11 +12,13 @@ import { Bell } from 'lucide-react-native';
 import { Card, CardContent, CardHeader } from '../components/Card';
 import { Button } from '../components/Button';
 import { colors } from '../theme/colors';
+import { useCampusWebSocket } from '../hooks/useCampusWebSocket';
 
 export default function HomeScreen({ navigation }: any) {
   const [user, setUser] = useState<any>(null);
   const [schedule, setSchedule] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { notifications } = useCampusWebSocket();
 
   useEffect(() => {
     async function fetchData() {
@@ -56,7 +58,7 @@ export default function HomeScreen({ navigation }: any) {
           </View>
           <View style={styles.iconButton}>
             <Bell size={24} color={colors.text} />
-            <View style={styles.badge} />
+            {notifications.length > 0 && <View style={styles.badge} />}
           </View>
         </View>
 
