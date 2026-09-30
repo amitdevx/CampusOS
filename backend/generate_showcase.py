@@ -6,7 +6,6 @@ import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
 
 from sqlalchemy import text
-from sqlalchemy.exc import DataError, StatementError
 from app.core.database import SessionLocal
 from app.models.user import User, UserRole, StudentProfile, StaffProfile
 from app.models.academic import Department, Course, Batch, Division, Enrollment, Subject
@@ -24,40 +23,27 @@ def get_name():
 
 print("Starting Showcase Data Generation...")
 
-student_count = db.query(User).filter(User.role.in_(["STUDENT", "student"])).count()
+student_count = db.query(User).filter(User.role == "STUDENT").count()
 if student_count > 10:
     print("Database already has many students. Skipping showcase generation to prevent duplicates.")
     sys.exit(0)
 
 default_pass = get_password_hash("campusos2026")
 
-def safe_create_user(email, name, role_upper, role_lower, password):
+def safe_create_user(email, name, role, password):
     user = db.query(User).filter_by(email=email).first()
     if user:
         return user
-    try:
-        new_user = User(
-            email=email,
-            hashed_password=password,
-            full_name=name,
-            role=role_upper
-        )
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        return new_user
-    except (DataError, StatementError):
-        db.rollback()
-        raw_sql = text("INSERT INTO users (email, hashed_password, full_name, role) VALUES (:email, :hashed_password, :full_name, :role) RETURNING id")
-        result = db.execute(raw_sql, {
-            "email": email,
-            "hashed_password": password,
-            "full_name": name,
-            "role": role_lower
-        })
-        new_id = result.scalar()
-        db.commit()
-        return db.query(User).filter_by(id=new_id).first()
+    new_user = User(
+        email=email,
+        hashed_password=password,
+        full_name=name,
+        role=role
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
 admin_user = db.query(User).filter_by(email="admin@campusos.com").first()
 admin_id = admin_user.id if admin_user else 1
@@ -92,7 +78,7 @@ teachers = []
 for i in range(1, 6):
     name = get_name()
     email = f"prof{i}@kpgcollege.edu.in"
-    t = safe_create_user(email, name, "TEACHER", "teacher", default_pass)
+    t = safe_create_user(email, name, "TEACHER", default_pass)
     
     profile = db.query(StaffProfile).filter_by(user_id=t.id).first()
     if not profile:
@@ -149,7 +135,7 @@ for (course, batch, div, dept) in all_divisions:
         email = f"student{student_idx}@kpgcollege.edu.in"
         student_idx += 1
         
-        s = safe_create_user(email, name, "STUDENT", "student", default_pass)
+        s = safe_create_user(email, name, "STUDENT", default_pass)
         
         profile = db.query(StudentProfile).filter_by(user_id=s.id).first()
         if not profile:
