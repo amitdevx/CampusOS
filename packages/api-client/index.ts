@@ -150,3 +150,13 @@ export const getAuditLogs = async () => {
   const response = await apiClient.get('/api/v1/engineering/audit-logs');
   return response.data;
 };
+
+export const createUser = async (data: any) => {
+  const response = await apiClient.post('/api/v1/auth/register', data);
+  return response.data;
+};
+
+export const createResource = async (data: any) => {
+  const response = await apiClient.post('/api/v1/campus/resources', data);
+  return response.data;
+};

@@ -70,8 +70,8 @@ export default function AdminDashboardPage() {
           <Link href="/admin/events" className="block text-center px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
             + Create Event
           </Link>
-          <Link href="/admin/qr" className="block text-center px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
-            + Generate Attendance QR
+          <Link href="/admin/resources" className="block text-center px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
+            + Add Resource
           </Link>
         </div>
       </div>

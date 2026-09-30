@@ -24,7 +24,7 @@ def get_name():
 print("Starting Showcase Data Generation...")
 
 student_count = db.query(User).filter(User.role == "STUDENT").count()
-if student_count > 10:
+if student_count > 1000:
     print("Database already has many students. Skipping showcase generation to prevent duplicates.")
     sys.exit(0)
 

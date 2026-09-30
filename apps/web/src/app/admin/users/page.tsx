@@ -8,9 +8,41 @@ import { UserPlus, Users, AlertCircle } from 'lucide-react';
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
 
-  useEffect(() => {
+  const [showAdd, setShowAdd] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newFullName, setNewFullName] = useState('');
+  const [newRole, setNewRole] = useState('STUDENT');
+
+  const loadUsers = () => {
     getUsers().then(data => setUsers(data || [])).catch(console.error);
+  };
+
+  useEffect(() => {
+    loadUsers();
   }, []);
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { createUser } = await import('@campusos/api-client');
+      await createUser({
+        email: newEmail,
+        password: newPassword,
+        full_name: newFullName,
+        role: newRole
+      });
+      setShowAdd(false);
+      setNewEmail('');
+      setNewPassword('');
+      setNewFullName('');
+      setNewRole('STUDENT');
+      loadUsers();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save user');
+    }
+  };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -29,8 +61,49 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-500">Manage students, teachers, and faculty accounts.</p>
         </div>
-        <Button icon={<UserPlus size={18} />}>Add User</Button>
+        <Button icon={<UserPlus size={18} />} onClick={() => setShowAdd(!showAdd)}>Add User</Button>
       </div>
+
+      {showAdd && (
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <h4 className="text-md font-medium text-gray-900 mb-4">Create New User</h4>
+          <form onSubmit={handleAddUser} className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <div className="mt-1">
+                <input type="text" required value={newFullName} onChange={(e) => setNewFullName(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
+              </div>
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <div className="mt-1">
+                <input type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
+              </div>
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <div className="mt-1">
+                <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
+              </div>
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700">Role</label>
+              <div className="mt-1">
+                <select value={newRole} onChange={(e) => setNewRole(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black">
+                  <option value="STUDENT">Student</option>
+                  <option value="TEACHER">Teacher</option>
+                  <option value="FACULTY">Faculty</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div className="sm:col-span-6 flex justify-end">
+              <button type="button" onClick={() => setShowAdd(false)} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">Cancel</button>
+              <button type="submit" className="bg-blue-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700">Save User</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
