@@ -51,3 +51,43 @@ def create_notice(notice: NoticeCreate, db: SessionDep, current_user: CurrentUse
 @router.get("/notices", response_model=List[NoticeResponse])
 def get_notices(db: SessionDep, current_user: CurrentUser):
     return db.query(Notice).order_by(Notice.created_at.desc()).all()
+
+# --- Resources & Booking ---
+@router.post("/resources", response_model=ResourceResponse)
+def create_resource(resource: ResourceCreate, db: SessionDep, current_user=Depends(get_current_active_admin)):
+    db_resource = Resource(**resource.model_dump())
+    db.add(db_resource)
+    db.commit()
+    db.refresh(db_resource)
+    return db_resource
+
+@router.get("/resources", response_model=List[ResourceResponse])
+def get_resources(db: SessionDep, current_user: CurrentUser):
+    return db.query(Resource).all()
+
+@router.post("/bookings", response_model=BookingResponse)
+def book_resource(booking: BookingCreate, db: SessionDep, current_user: CurrentUser):
+    # Conflict detection
+    overlapping = db.query(Booking).filter(
+        Booking.resource_id == booking.resource_id,
+        Booking.status == "APPROVED",
+        Booking.start_time < booking.end_time,
+        Booking.end_time > booking.start_time
+    ).first()
+    
+    if overlapping:
+        raise HTTPException(status_code=400, detail="Resource is already booked during this time")
+        
+    db_booking = Booking(**booking.model_dump(), user_id=current_user.id)
+    # Auto-approve for admins/faculty, PENDING for students
+    if current_user.role in ["ADMIN", "SUPER_ADMIN", "FACULTY", "TEACHER"]:
+        db_booking.status = "APPROVED"
+        
+    db.add(db_booking)
+    db.commit()
+    db.refresh(db_booking)
+    return db_booking
+
+@router.get("/my-bookings", response_model=List[BookingResponse])
+def get_my_bookings(db: SessionDep, current_user: CurrentUser):
+    return db.query(Booking).filter(Booking.user_id == current_user.id).order_by(Booking.start_time.asc()).all()

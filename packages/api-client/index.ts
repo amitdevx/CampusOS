@@ -121,3 +121,22 @@ export const closeAttendanceSession = async (sessionId: number) => {
   const response = await apiClient.post(`/attendance/sessions/${sessionId}/close`);
   return response.data;
 };
+
+export const getResources = async () => {
+  const response = await apiClient.get('/campus/resources');
+  return response.data;
+};
+
+export const bookResource = async (resourceId: number, startTime: string, endTime: string) => {
+  const response = await apiClient.post('/campus/bookings', {
+    resource_id: resourceId,
+    start_time: startTime,
+    end_time: endTime
+  });
+  return response.data;
+};
+
+export const getMyBookings = async () => {
+  const response = await apiClient.get('/campus/my-bookings');
+  return response.data;
+};

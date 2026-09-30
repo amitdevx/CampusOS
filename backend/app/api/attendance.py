@@ -12,11 +12,12 @@ from ..schemas.attendance import (
     AttendanceSessionCreate, AttendanceSessionResponse,
     AttendanceRecordCreate, AttendanceRecordResponse
 )
+from ..core.notify import send_notification
 
 router = APIRouter()
 
 @router.post("/sessions", response_model=AttendanceSessionResponse)
-def start_attendance_session(session: AttendanceSessionCreate, db: SessionDep, current_user=Depends(get_current_teacher_or_admin)):
+async def start_attendance_session(session: AttendanceSessionCreate, db: SessionDep, current_user=Depends(get_current_teacher_or_admin)):
     # Verify the class exists
     class_session = db.query(ClassSession).filter(ClassSession.id == session.class_session_id).first()
     if not class_session:
@@ -55,6 +56,20 @@ def start_attendance_session(session: AttendanceSessionCreate, db: SessionDep, c
     db.add(db_session)
     db.commit()
     db.refresh(db_session)
+    
+    # Notify students that attendance has started
+    if class_session.division_id:
+        enrollments = db.query(Enrollment).filter(Enrollment.division_id == class_session.division_id, Enrollment.status == "ACTIVE").all()
+        student_ids = [e.student_id for e in enrollments]
+        if student_ids:
+            await send_notification(
+                db, 
+                student_ids, 
+                "Attendance Started", 
+                f"Attendance for your class in Room {class_session.room} is now active.", 
+                "SYSTEM_ALERT"
+            )
+
     return db_session
 
 @router.post("/sessions/{session_id}/close", response_model=AttendanceSessionResponse)
