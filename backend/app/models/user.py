@@ -18,6 +18,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.STUDENT, nullable=False)
+    push_token = Column(String, nullable=True)
 
     # Relationships
     classes = relationship("ClassSession", back_populates="teacher")

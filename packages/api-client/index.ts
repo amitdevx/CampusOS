@@ -140,3 +140,13 @@ export const getMyBookings = async () => {
   const response = await apiClient.get('/api/v1/campus/my-bookings');
   return response.data;
 };
+
+export const updatePushToken = async (token: string) => {
+  const response = await apiClient.post('/api/v1/users/push-token', { push_token: token });
+  return response.data;
+};
+
+export const getAuditLogs = async () => {
+  const response = await apiClient.get('/api/v1/engineering/audit-logs');
+  return response.data;
+};

@@ -105,10 +105,15 @@ function MainNavigator({ route }: any) {
 }
 
 
+import { usePushNotifications } from './hooks/usePushNotifications';
+import { updatePushToken } from '@campusos/api-client';
+
 export default function App() {
   const [isReady, setIsReady] = React.useState(false);
   const [initialRoute, setInitialRoute] = React.useState<'Login' | 'Main'>('Login');
   const [initialRole, setInitialRole] = React.useState('STUDENT');
+  
+  const { expoPushToken } = usePushNotifications();
 
   React.useEffect(() => {
     async function restoreSession() {
@@ -131,6 +136,12 @@ export default function App() {
     }
     restoreSession();
   }, []);
+
+  React.useEffect(() => {
+    if (initialRoute === 'Main' && expoPushToken?.data) {
+      updatePushToken(expoPushToken.data).catch(console.error);
+    }
+  }, [initialRoute, expoPushToken]);
 
   if (!isReady) {
     return null; // Or a splash screen component

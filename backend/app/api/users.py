@@ -41,3 +41,23 @@ def delete_user(
     db.delete(user)
     db.commit()
     return user
+
+from pydantic import BaseModel
+from .deps import CurrentUser
+
+class PushTokenUpdate(BaseModel):
+    push_token: str
+
+@router.post("/push-token")
+def update_push_token(
+    *,
+    db: SessionDep,
+    token_update: PushTokenUpdate,
+    current_user: CurrentUser,
+):
+    """
+    Save Expo push token for real-time offline notifications (Phase 9).
+    """
+    current_user.push_token = token_update.push_token
+    db.commit()
+    return {"status": "ok"}

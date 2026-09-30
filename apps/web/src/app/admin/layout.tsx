@@ -35,10 +35,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const links = [
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
-    { name: 'Events', path: '/admin/events', icon: <Calendar size={20} /> },
-    { name: 'Timetable', path: '/admin/timetable', icon: <Clock size={20} /> },
-    { name: 'Attendance QR', path: '/admin/qr', icon: <QrCode size={20} /> },
     { name: 'Users', path: '/admin/users', icon: <Users size={20} /> },
+    { name: 'Timetable', path: '/admin/timetable', icon: <Clock size={20} /> },
+    { name: 'Resources', path: '/admin/resources', icon: <Calendar size={20} /> },
+    { name: 'Events', path: '/admin/events', icon: <Calendar size={20} /> },
+    { name: 'Audit Logs', path: '/admin/audit', icon: <Clock size={20} /> },
   ];
 
   return (
