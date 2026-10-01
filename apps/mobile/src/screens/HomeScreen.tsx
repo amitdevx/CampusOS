@@ -5,16 +5,16 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import { getMe, getMySchedule } from '@campusos/api-client';
-import { Bell, MapPin, Clock } from 'lucide-react-native';
+import { Bell, MapPin, QrCode } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
-import { Card, CardContent, CardHeader } from '../components/Card';
-import { Button } from '../components/Button';
 import { colors } from '../theme/colors';
 import { useCampusWebSocket } from '../hooks/useCampusWebSocket';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }: any) {
   const [user, setUser] = useState<any>(null);
@@ -32,20 +32,12 @@ export default function HomeScreen({ navigation }: any) {
         setUser(userData);
         setSchedule(scheduleData || []);
       } catch {
-        // Fail silently on home screen - user sees empty state
       } finally {
         setLoading(false);
       }
     }
     fetchData();
   }, []);
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning,';
-    if (hour < 18) return 'Good afternoon,';
-    return 'Good evening,';
-  };
 
   if (loading) {
     return (
@@ -59,69 +51,79 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <Screen style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.welcome}>{user?.full_name || 'User'}</Text>
-          </View>
+          <Text style={styles.brandText}>ResoSync</Text>
           <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-            <Bell size={24} color={colors.text} />
+            <Bell size={20} color={colors.text} />
             {notifications.length > 0 && <View style={styles.badge} />}
           </TouchableOpacity>
         </View>
 
-        <Card style={styles.mt24}>
-          <CardHeader title="Today's Schedule" />
-          <CardContent>
-            {schedule.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.cardEmpty}>No classes scheduled for today.</Text>
+        {/* THE DIGITAL ID PASS */}
+        <View style={styles.idCard}>
+          <View style={styles.idCardInner}>
+            <View style={styles.idHeader}>
+              <View style={styles.roleBadge}>
+                <Text style={styles.roleText}>{user?.role || 'USER'}</Text>
               </View>
-            ) : (
-              schedule.map((session, index) => (
-                <View key={index} style={[styles.sessionRow, index === schedule.length - 1 && styles.noBorder]}>
-                  <View style={styles.sessionTimeCol}>
+              <View style={styles.statusDot} />
+            </View>
+            
+            <View style={styles.idBody}>
+              <Text style={styles.idName}>{user?.full_name || 'Guest User'}</Text>
+              <Text style={styles.idEmail}>{user?.email || 'guest@campus.edu'}</Text>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.passButton}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate(isStudent ? 'Scan QR' : 'Generate QR')}
+            >
+              <QrCode size={18} color="#FFFFFF" />
+              <Text style={styles.passButtonText}>
+                {isStudent ? 'Scan Campus Pass' : 'Generate Session Pass'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* TIMELINE */}
+        <View style={styles.timelineSection}>
+          <Text style={styles.sectionTitle}>TODAY'S TIMELINE</Text>
+          
+          {schedule.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.cardEmpty}>No schedule items remaining today.</Text>
+            </View>
+          ) : (
+            <View style={styles.timelineContainer}>
+              {schedule.map((session, index) => (
+                <View key={index} style={styles.timelineRow}>
+                  <View style={styles.timeCol}>
                     <Text style={styles.timeText}>
                       {new Date(session.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Text>
+                    <Text style={styles.timeTextMuted}>
+                      {new Date(session.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
                   </View>
-                  <View style={styles.sessionCard}>
+                  
+                  <View style={styles.timelineNode}>
+                    <View style={styles.nodeDot} />
+                    {index !== schedule.length - 1 && <View style={styles.nodeLine} />}
+                  </View>
+
+                  <View style={styles.timelineContent}>
                     <Text style={styles.sessionSubject}>Subject #{session.subject_id}</Text>
-                    <View style={styles.sessionDetailsRow}>
-                      <View style={styles.detailItem}>
-                        <Clock size={12} color={colors.textSecondary} style={styles.detailIcon} />
-                        <Text style={styles.sessionDetail}>
-                          {new Date(session.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
-                      </View>
-                      <View style={styles.detailItem}>
-                        <MapPin size={12} color={colors.textSecondary} style={styles.detailIcon} />
-                        <Text style={styles.sessionDetail}>Room {session.room}</Text>
-                      </View>
+                    <View style={styles.locationRow}>
+                      <MapPin size={12} color={colors.textSecondary} />
+                      <Text style={styles.sessionDetail}>Room {session.room}</Text>
                     </View>
                   </View>
                 </View>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        <View style={styles.quickActionsContainer}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          {isStudent ? (
-            <Button 
-              title="Scan QR for Attendance" 
-              onPress={() => navigation.navigate('Scan QR')} 
-              style={styles.actionButton}
-            />
-          ) : (
-            <Button 
-              title="Generate QR Session" 
-              onPress={() => navigation.navigate('Generate QR')} 
-              style={styles.actionButton}
-              variant="primary"
-            />
+              ))}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -130,94 +132,202 @@ export default function HomeScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAFA' },
   content: { padding: 20 },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 24,
   },
-  greeting: { fontSize: 16, color: colors.textSecondary, marginBottom: 4, fontWeight: '500' },
-  welcome: { fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
+  brandText: { fontSize: 22, fontWeight: '900', color: '#09090B', letterSpacing: -0.5 },
   iconButton: {
-    padding: 10,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
+    padding: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: '#E4E4E7',
   },
   badge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.danger,
-    borderWidth: 2,
-    borderColor: colors.surface,
+    top: 6,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
-  mt24: { marginTop: 24 },
-  emptyState: { paddingVertical: 20 },
-  cardEmpty: { color: colors.textSecondary, fontSize: 15, textAlign: 'center' },
-  sessionRow: { 
-    flexDirection: 'row', 
-    alignItems: 'stretch',
-    marginBottom: 16,
+  
+  /* ID CARD STYLES */
+  idCard: {
+    backgroundColor: '#09090B',
+    borderRadius: 24,
+    padding: 4,
+    shadowColor: '#09090B',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
+    marginBottom: 40,
   },
-  noBorder: { marginBottom: 0 },
-  sessionTimeCol: {
-    width: 75,
+  idCardInner: {
+    backgroundColor: '#18181B',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#27272A',
+  },
+  idHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  roleBadge: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  roleText: {
+    color: '#D4D4D8',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+  },
+  idBody: {
+    marginBottom: 32,
+  },
+  idName: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  idEmail: {
+    color: '#A1A1AA',
+    fontSize: 14,
+  },
+  passButton: {
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  passButtonText: {
+    color: '#09090B',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  /* TIMELINE STYLES */
+  timelineSection: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#71717A',
+    letterSpacing: 1.5,
+    marginBottom: 20,
+  },
+  timelineContainer: {
+    paddingLeft: 4,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    marginBottom: 24,
+  },
+  timeCol: {
+    width: 65,
     alignItems: 'flex-start',
-    paddingTop: 12,
+    paddingTop: 2,
   },
   timeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
+    color: '#09090B',
   },
-  sessionCard: {
+  timeTextMuted: {
+    fontSize: 12,
+    color: '#A1A1AA',
+    marginTop: 2,
+  },
+  timelineNode: {
+    width: 24,
+    alignItems: 'center',
+    marginHorizontal: 12,
+  },
+  nodeDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#09090B',
+    borderWidth: 3,
+    borderColor: '#FAFAFA',
+    zIndex: 2,
+  },
+  nodeLine: {
+    position: 'absolute',
+    top: 12,
+    bottom: -36,
+    width: 2,
+    backgroundColor: '#E4E4E7',
+    zIndex: 1,
+  },
+  timelineContent: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
     padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E4E4E7',
+    marginTop: -8,
   },
-  sessionSubject: { fontWeight: '700', color: colors.text, fontSize: 16, marginBottom: 8 },
-  sessionDetailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  detailIcon: { marginRight: 4 },
-  sessionDetail: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
-  quickActionsContainer: {
-    marginTop: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
+  sessionSubject: {
     fontWeight: '700',
-    color: colors.text,
-    marginBottom: 16,
+    color: '#09090B',
+    fontSize: 15,
+    marginBottom: 6,
   },
-  actionButton: {
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sessionDetail: {
+    color: '#71717A',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  emptyState: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E4E4E7',
+    borderStyle: 'dashed',
+    borderRadius: 16,
+  },
+  cardEmpty: {
+    color: '#A1A1AA',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

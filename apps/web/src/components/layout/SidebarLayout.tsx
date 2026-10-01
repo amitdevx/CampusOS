@@ -70,24 +70,25 @@ export function SidebarLayout({
   const activeBg = roleActiveBg[theme] || roleActiveBg.blue;
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans">
+    <div className="flex h-screen bg-[#F4F4F5] font-sans selection:bg-[#0F172A] selection:text-white">
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+        <div className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      <aside className={`fixed inset-y-0 left-0 z-30 w-64 transform transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 flex flex-col bg-white border-r border-slate-200 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        {/* Logo */}
-        <div className="p-6 flex items-center gap-3 border-b border-slate-100">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-            <span className="text-white font-bold text-base leading-none">R</span>
+      {/* COMMAND CENTER SIDEBAR */}
+      <aside className={`fixed inset-y-0 left-0 z-30 w-64 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col bg-[#09090B] text-[#FAFAFA] border-r border-[#27272A] ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-8 h-8 bg-white text-[#09090B] flex items-center justify-center font-bold text-lg rounded-sm">
+            R
           </div>
           <div>
-            <span className="text-xl font-bold text-slate-900 tracking-tight leading-none">ResoSync</span>
-            <p className={`text-[10px] font-bold mt-0.5 uppercase tracking-widest ${accent}`}>{subtitle}</p>
+            <span className="text-xl font-bold tracking-tight leading-none block">ResoSync</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-[#A1A1AA] block mt-1">{subtitle}</span>
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+          <div className="text-[10px] font-semibold text-[#52525B] uppercase tracking-widest mb-4 px-2">Core Modules</div>
           {links.map((link) => {
             const isActive = pathname === link.path || pathname.startsWith(link.path + '/');
             return (
@@ -95,72 +96,73 @@ export function SidebarLayout({
                 key={link.name}
                 href={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200 ${
                   isActive
-                    ? `${activeBg} font-semibold`
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-[#27272A] text-white font-medium shadow-sm'
+                    : 'text-[#A1A1AA] hover:bg-[#18181B] hover:text-white'
                 }`}
               >
-                {link.icon && <span className="flex-shrink-0">{link.icon}</span>}
+                {link.icon && <span className={`${isActive ? 'text-white' : 'text-[#71717A]'}`}>{link.icon}</span>}
                 <span className="flex-1">{link.name}</span>
-                {isActive && <ChevronRight size={14} className="opacity-50" />}
+                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-3 border-t border-slate-100">
+        <div className="p-4 border-t border-[#27272A]">
           <button
             onClick={onLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium text-[#F87171] hover:bg-[#451A1A] hover:text-[#FCA5A5] transition-colors"
           >
             <LogOut size={16} />
-            Sign Out
+            End Session
           </button>
         </div>
       </aside>
 
+      {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col overflow-hidden w-full">
-        <header className="bg-white border-b border-slate-200 z-10">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5">
+        <header className="bg-white border-b border-[#E4E4E7] z-10 sticky top-0">
+          <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
-              <button className="lg:hidden text-slate-500 hover:text-slate-700" onClick={() => setMobileMenuOpen(true)}>
+              <button className="lg:hidden text-[#71717A] hover:text-[#09090B]" onClick={() => setMobileMenuOpen(true)}>
                 <Menu size={22} />
               </button>
-              <h2 className="text-base font-semibold text-slate-800 hidden sm:block">
+              <h2 className="text-lg font-semibold text-[#09090B] tracking-tight hidden sm:block">
                 {links.find((l) => l.path === pathname)?.name || 'Dashboard'}
               </h2>
             </div>
 
-            <div className="flex items-center gap-3 sm:gap-4 relative">
-              <div className="hidden md:flex relative text-slate-400 focus-within:text-emerald-500">
+            <div className="flex items-center gap-4 relative">
+              <div className="hidden md:flex relative text-[#A1A1AA] focus-within:text-[#09090B]">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search..."
-                  className="bg-slate-50 text-sm border border-slate-200 rounded-full pl-9 pr-4 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400"
+                  placeholder="Search network..."
+                  className="bg-[#F4F4F5] text-sm border-none rounded-md pl-9 pr-4 py-2 w-64 focus:outline-none focus:ring-1 focus:ring-[#09090B] focus:bg-white transition-all text-[#09090B] placeholder-[#A1A1AA]"
                 />
               </div>
 
               <div ref={notifRef} className="relative">
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
-                  className="relative p-2 text-slate-500 hover:text-emerald-600 hover:bg-slate-50 rounded-lg transition-colors"
+                  className="relative p-2 text-[#71717A] hover:text-[#09090B] hover:bg-[#F4F4F5] rounded-md transition-colors"
                 >
                   <Bell size={18} />
                   {notifications.length > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EF4444] rounded-full ring-2 ring-white" />
                   )}
                 </button>
                 {notifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/50 z-50 overflow-hidden">
-                    <div className="p-4 text-sm font-semibold text-slate-900 border-b border-slate-100">Notifications</div>
+                  <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E4E4E7] rounded-lg shadow-xl shadow-black/5 z-50 overflow-hidden">
+                    <div className="p-4 text-xs font-bold text-[#09090B] uppercase tracking-wider border-b border-[#E4E4E7] bg-[#FAFAFA]">System Alerts</div>
                     <div className="max-h-64 overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="p-4 text-sm text-slate-400 text-center py-8">No new notifications</div>
+                        <div className="p-4 text-sm text-[#A1A1AA] text-center py-8">No active alerts.</div>
                       ) : (
                         notifications.map((n: any, i: number) => (
-                          <div key={i} className="p-4 text-sm border-b border-slate-100 hover:bg-slate-50 text-slate-700">{n.message}</div>
+                          <div key={i} className="p-4 text-sm border-b border-[#E4E4E7] hover:bg-[#FAFAFA] text-[#27272A]">{n.message}</div>
                         ))
                       )}
                     </div>
@@ -171,18 +173,18 @@ export function SidebarLayout({
               <div ref={profileRef} className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="h-8 w-8 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                  className="h-8 w-8 bg-[#09090B] text-white rounded-md flex items-center justify-center hover:bg-[#27272A] transition-colors"
                 >
                   <User size={15} />
                 </button>
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-[#E4E4E7] rounded-lg shadow-xl shadow-black/5 z-50 overflow-hidden">
                     <div className="py-1">
                       <button
                         onClick={onLogout}
-                        className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium"
+                        className="block w-full text-left px-4 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2] font-medium"
                       >
-                        Sign Out
+                        End Session
                       </button>
                     </div>
                   </div>
@@ -192,7 +194,7 @@ export function SidebarLayout({
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 bg-slate-50">
+        <main className="flex-1 overflow-auto p-6 lg:p-10 bg-[#F4F4F5]">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

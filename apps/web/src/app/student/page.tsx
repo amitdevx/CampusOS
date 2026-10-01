@@ -19,70 +19,83 @@ export default function StudentDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
-        <h3 className="text-2xl font-bold text-slate-900 mb-2">Welcome back, {user?.full_name || 'Student'}!</h3>
-        <p className="text-slate-500 text-lg">Here's what's happening on campus today.</p>
+      {/* IDENTITY BENTO */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="col-span-1 md:col-span-3 bg-[#09090B] rounded-xl p-8 flex flex-col justify-between relative overflow-hidden border border-[#27272A]">
+          <div className="absolute top-0 right-0 p-32 bg-white/5 blur-[100px] rounded-full pointer-events-none" />
+          <div>
+            <div className="inline-flex items-center gap-2 px-2 py-1 rounded bg-white/10 text-white/70 font-mono text-xs font-semibold mb-6 uppercase tracking-widest">
+              Digital ID Active
+            </div>
+            <h3 className="text-3xl font-semibold text-white tracking-tight leading-tight">
+              {user?.full_name || 'STUDENT'}
+            </h3>
+            <p className="text-[#A1A1AA] text-sm mt-1">{user?.email}</p>
+          </div>
+          <div className="mt-8 flex gap-4">
+            <button className="bg-white text-[#09090B] px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-[#F4F4F5] transition-colors">
+              Display QR Pass
+            </button>
+            <button className="bg-[#27272A] text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-[#3F3F46] transition-colors border border-[#3F3F46]">
+              View Full Profile
+            </button>
+          </div>
+        </div>
+
+        {/* QUICK STATS */}
+        <div className="col-span-1 flex flex-col gap-6">
+          <div className="bg-white rounded-xl p-6 border border-[#E4E4E7] flex-1 flex flex-col justify-center shadow-sm">
+            <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-1">Pending Work</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold tracking-tighter text-[#09090B]">{assignmentsCount}</span>
+              <span className="text-sm font-medium text-[#71717A]">items</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-6 border border-[#E4E4E7] flex-1 flex flex-col justify-center shadow-sm">
+            <div className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-1">Campus Events</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold tracking-tighter text-[#09090B]">{eventsCount}</span>
+              <span className="text-sm font-medium text-[#71717A]">upcoming</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardContent>
-            <p className="text-sm font-medium text-slate-500 mb-1">Upcoming Classes Today</p>
-            <div className="flex items-center gap-3">
-              <p className="text-4xl font-bold text-blue-600">{schedule.length}</p>
-              {schedule.length > 0 && <Badge variant="blue">Scheduled</Badge>}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent>
-            <p className="text-sm font-medium text-slate-500 mb-1">Pending Assignments</p>
-            <div className="flex items-center gap-3">
-              <p className="text-4xl font-bold text-slate-900">{assignmentsCount}</p>
-              {assignmentsCount > 0 ? <Badge variant="yellow">Due Soon</Badge> : <Badge variant="green">All Clear</Badge>}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent>
-            <p className="text-sm font-medium text-slate-500 mb-1">Upcoming Events</p>
-            <div className="flex items-center gap-3">
-              <p className="text-4xl font-bold text-indigo-600">{eventsCount}</p>
-              {eventsCount > 0 && <Badge variant="indigo">Campus Wide</Badge>}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {schedule.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Today's Schedule</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-slate-100">
+      {/* TIMELINE */}
+      <div>
+        <h4 className="text-xs font-bold text-[#52525B] uppercase tracking-widest mb-4">Today's Timeline</h4>
+        {schedule.length === 0 ? (
+          <div className="bg-white rounded-xl border border-dashed border-[#D4D4D8] p-8 text-center">
+            <p className="text-sm text-[#71717A] font-medium">No classes scheduled for today.</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-[#E4E4E7] shadow-sm overflow-hidden">
+            <div className="divide-y divide-[#F4F4F5]">
               {schedule.map((session, i) => (
-                <div key={i} className="flex items-center justify-between p-6 hover:bg-slate-50 transition-colors">
-                  <div>
-                    <h4 className="text-lg font-semibold text-slate-900">Subject #{session.subject_id}</h4>
-                    <p className="text-slate-500 mt-1">Room {session.room}</p>
+                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 hover:bg-[#FAFAFA] transition-colors group">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-[#F4F4F5] rounded-lg flex items-center justify-center border border-[#E4E4E7] text-[#09090B] font-mono text-xs font-bold group-hover:border-[#09090B] transition-colors">
+                      {new Date(session.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).replace(' ', '\n')}
+                    </div>
+                    <div>
+                      <h4 className="text-base font-semibold text-[#09090B]">Subject #{session.subject_id}</h4>
+                      <p className="text-[#71717A] text-sm mt-0.5 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                        Room {session.room}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-blue-600 font-medium">
-                      {new Date(session.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    <p className="text-slate-400 text-sm mt-1">
-                      to {new Date(session.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                  <div className="mt-4 sm:mt-0 sm:text-right flex items-center sm:block gap-4">
+                    <span className="text-xs font-mono text-[#A1A1AA] bg-[#F4F4F5] px-2 py-1 rounded">
+                      {new Date(session.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
