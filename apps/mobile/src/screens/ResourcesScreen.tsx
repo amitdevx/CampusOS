@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import { Screen } from '../components/Screen';
 import { getResources, bookResource, getMyBookings } from '@campusos/api-client';
 import { colors } from '../theme/colors';
 import { Badge } from '../components/Badge';
@@ -58,7 +59,7 @@ export default function ResourcesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.header}>Campus Resources</Text>
         
@@ -112,7 +113,7 @@ export default function ResourcesScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

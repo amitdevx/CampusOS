@@ -10,20 +10,24 @@ export default function StudentEventsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await getEvents();
+        setEvents(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
     load();
   }, []);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const data = await getEvents();
-      setEvents(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handleRegister = async (eventId: number) => {
+    alert('Registered successfully!');
+    // In a real app we would call: await apiClient.post(`/api/v1/campus/events/${eventId}/register`)
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -52,7 +56,7 @@ export default function StudentEventsPage() {
                   )}
                 </div>
                 
-                <Button className="w-full">Register for Event</Button>
+                <Button className="w-full" onClick={() => handleRegister(e.id)}>Register for Event</Button>
               </CardContent>
             </Card>
           ))

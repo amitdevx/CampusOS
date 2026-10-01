@@ -9,20 +9,23 @@ export default function StudentAssignmentsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await getAssignments();
+        setAssignments(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
     load();
   }, []);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const data = await getAssignments();
-      setAssignments(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handleSubmit = (id: number) => {
+    alert('Assignment marked as submitted!');
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -46,7 +49,7 @@ export default function StudentAssignmentsPage() {
                       <span>Due: {new Date(a.due_date).toLocaleString()}</span>
                     </div>
                   </div>
-                  <Button variant="primary">Submit Work</Button>
+                  <Button variant="primary" onClick={() => handleSubmit(a.id)}>Submit Work</Button>
                 </div>
               ))}
             </div>

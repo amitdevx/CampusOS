@@ -174,7 +174,7 @@ export default function App() {
           <Stack.Screen name="Main" component={MainNavigator} initialParams={{ role: initialRole }} />
         </Stack.Navigator>
       </NavigationContainer>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
     </SafeAreaProvider>
   );
 }

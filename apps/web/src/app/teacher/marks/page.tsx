@@ -8,21 +8,24 @@ export default function TeacherMarksPage() {
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const data = await getExams();
-      setExams(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await getExams();
+        setExams(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
     load();
   }, []);
+
+  const handleEnterMarks = (id: number) => {
+    alert('Navigating to marks entry for exam ' + id);
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -47,7 +50,7 @@ export default function TeacherMarksPage() {
                       <span>Date: {new Date(e.exam_date).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <Button variant="outline">Enter Marks</Button>
+                  <Button variant="outline" onClick={() => handleEnterMarks(e.id)}>Enter Marks</Button>
                 </div>
               ))}
             </div>

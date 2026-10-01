@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { getMe, getMySchedule } from '@campusos/api-client';
 import { Bell, MapPin, Clock } from 'lucide-react-native';
+import { Screen } from '../components/Screen';
 import { Card, CardContent, CardHeader } from '../components/Card';
 import { Button } from '../components/Button';
 import { colors } from '../theme/colors';
@@ -57,7 +58,7 @@ export default function HomeScreen({ navigation }: any) {
   const isStudent = user?.role === 'STUDENT';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
           <View>
@@ -124,7 +125,7 @@ export default function HomeScreen({ navigation }: any) {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

@@ -13,6 +13,7 @@ import {
 import * as SecureStore from 'expo-secure-store';
 import { login, setAuthToken, getMe } from '@campusos/api-client';
 import { GraduationCap } from 'lucide-react-native';
+import { Screen } from '../components/Screen';
 import { colors } from '../theme/colors';
 
 interface Props {
@@ -53,7 +54,7 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <Screen style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -110,7 +111,7 @@ export default function LoginScreen({ navigation }: Props) {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

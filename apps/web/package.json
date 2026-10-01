@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@campusos/api-client": "workspace:*",
+    "framer-motion": "^13.4.6",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
     "qrcode.react": "^4.2.0",

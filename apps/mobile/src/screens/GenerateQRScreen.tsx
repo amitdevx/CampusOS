@@ -10,6 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { Screen } from '../components/Screen';
 import { getMySchedule, startAttendanceSession, closeAttendanceSession } from '@campusos/api-client';
 import { Clock, MapPin, CheckCircle, X } from 'lucide-react-native';
 import { colors } from '../theme/colors';
@@ -80,9 +81,9 @@ export default function GenerateQRScreen() {
 
   if (fetchError) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Screen style={styles.container}>
         <ErrorState message="Could not load your schedule. Check your connection." />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -93,7 +94,7 @@ export default function GenerateQRScreen() {
   // Session Closed confirmation screen
   if (genState === 'closed') {
     return (
-      <SafeAreaView style={styles.container}>
+      <Screen style={styles.container}>
         <View style={styles.resultContainer}>
           <View style={[styles.resultIconWrap, { backgroundColor: '#F0FDF4' }]}>
             <CheckCircle size={56} color={colors.success} strokeWidth={1.5} />
@@ -104,12 +105,12 @@ export default function GenerateQRScreen() {
             <Text style={styles.actionButtonText}>Start New Session</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.screenTitle}>Attendance QR</Text>
 
@@ -224,7 +225,7 @@ export default function GenerateQRScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

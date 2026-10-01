@@ -110,6 +110,14 @@ export default function EventsPage() {
                         </div>
                       </div>
                     </div>
+                    <div className="ml-5 flex-shrink-0">
+                      <button 
+                        onClick={() => alert(`Cancel event ${event.id} logic would go here`)}
+                        className="px-3 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded border border-red-200 text-sm font-medium"
+                      >
+                        Cancel Event
+                      </button>
+                    </div>
                   </div>
                 </div>
               </li>

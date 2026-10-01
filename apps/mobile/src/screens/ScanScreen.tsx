@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
 import { X, Zap, CheckCircle } from 'lucide-react-native';
+import { Screen } from '../components/Screen';
 import { markAttendance } from '@campusos/api-client';
 import { colors } from '../theme/colors';
 
@@ -77,7 +78,7 @@ export default function ScanScreen() {
 
   if (hasPermission === false) {
     return (
-      <SafeAreaView style={styles.permissionContainer}>
+      <Screen style={styles.permissionContainer}>
         <View style={styles.permissionCard}>
           <Text style={styles.permissionTitle}>Camera Access Required</Text>
           <Text style={styles.permissionDesc}>
@@ -87,13 +88,13 @@ export default function ScanScreen() {
             <Text style={styles.permissionButtonText}>Open Settings</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   if (scanState === 'success' && successData) {
     return (
-      <SafeAreaView style={styles.successContainer}>
+      <Screen style={styles.successContainer}>
         <View style={styles.successCard}>
           <View style={styles.successIconWrap}>
             <CheckCircle size={56} color={colors.success} strokeWidth={1.5} />
@@ -107,13 +108,13 @@ export default function ScanScreen() {
             <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   if (scanState === 'error') {
     return (
-      <SafeAreaView style={styles.successContainer}>
+      <Screen style={styles.successContainer}>
         <View style={styles.errorCard}>
           <View style={styles.errorIconWrap}>
             <X size={48} color={colors.danger} strokeWidth={1.5} />
@@ -124,7 +125,7 @@ export default function ScanScreen() {
             <Text style={styles.retryButtonText}>Scan Again</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -154,9 +155,9 @@ export default function ScanScreen() {
       </View>
 
       {/* Top bar */}
-      <SafeAreaView style={styles.topBar}>
+      <Screen style={styles.topBar}>
         <Text style={styles.title}>Scan Attendance</Text>
-      </SafeAreaView>
+      </Screen>
 
       {/* Bottom instructions */}
       <View style={styles.bottomBar}>

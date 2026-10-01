@@ -10,6 +10,7 @@ import {
 import * as SecureStore from 'expo-secure-store';
 import { getMe, setAuthToken } from '@campusos/api-client';
 import { User, Mail, Shield, LogOut, ChevronRight } from 'lucide-react-native';
+import { Screen } from '../components/Screen';
 import { colors } from '../theme/colors';
 
 interface Props {
@@ -50,7 +51,7 @@ export default function ProfileScreen({ navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <Screen style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Profile</Text>
@@ -96,7 +97,7 @@ export default function ProfileScreen({ navigation }: Props) {
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

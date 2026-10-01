@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView } from 'react-native';
+import { Screen } from '../components/Screen';
 import { getMySchedule } from '@campusos/api-client';
 import { Clock, MapPin } from 'lucide-react-native';
 import { colors } from '../theme/colors';
@@ -31,7 +32,7 @@ export default function ClassesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <Text style={styles.header}>My Classes</Text>
       {classes.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -68,7 +69,7 @@ export default function ClassesScreen() {
           )}
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 

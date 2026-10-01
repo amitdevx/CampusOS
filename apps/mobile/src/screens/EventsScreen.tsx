@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView } from 'react-native';
+import { Screen } from '../components/Screen';
 import { getEvents } from '@campusos/api-client';
 import { MapPin, Calendar as CalendarIcon, Info } from 'lucide-react-native';
 import { colors } from '../theme/colors';
@@ -31,7 +32,7 @@ export default function EventsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <Text style={styles.header}>Campus Events</Text>
       {events.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -73,7 +74,7 @@ export default function EventsScreen() {
           )}
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 

@@ -14,7 +14,7 @@ export default function FacultyLayout({ children }: { children: React.ReactNode 
     const token = localStorage.getItem('userToken');
     const role = localStorage.getItem('userRole');
     
-    if (!token || (role !== 'FACULTY')) {
+    if (!token || (role !== 'FACULTY' && role !== 'SUPER_ADMIN')) {
       router.replace('/login');
     } else {
       setAuthToken(token);
