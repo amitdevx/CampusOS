@@ -2,19 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { getResources } from '@campusos/api-client';
-import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
 
 export default function AdminResourcesPage() {
   const [resources, setResources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    load();
-  }, []);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('ROOM');
+
+  useEffect(() => {
+    load();
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -30,74 +30,101 @@ export default function AdminResourcesPage() {
 
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg('');
     try {
       const { createResource } = await import('@campusos/api-client');
       await createResource({
         name: newName,
         type: newType,
-        capacity: 30
       });
       setShowAdd(false);
       setNewName('');
       setNewType('ROOM');
       load();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to save resource');
+      setErrorMsg(err.response?.data?.detail || 'Failed to save resource');
     }
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Resource Management</h1>
-        <Button onClick={() => setShowAdd(!showAdd)}>Add Resource</Button>
+    <div className="bg-white rounded-xl border border-[#E4E4E7] p-8 shadow-sm">
+      <div className="flex justify-between items-center mb-8 pb-4 border-b border-[#F4F4F5]">
+        <div>
+          <h3 className="text-xl font-bold tracking-tight text-[#09090B]">Resource Allocation</h3>
+          <p className="text-sm font-medium text-[#71717A] mt-1">Manage physical campus assets and spaces.</p>
+        </div>
+        <button 
+          onClick={() => setShowAdd(!showAdd)}
+          className="inline-flex items-center px-4 py-2 text-sm font-bold tracking-wide uppercase rounded-md text-white bg-[#09090B] hover:bg-[#27272A] transition-colors"
+        >
+          {showAdd ? 'Close Panel' : 'Allocate Asset'}
+        </button>
       </div>
 
       {showAdd && (
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h4 className="text-md font-medium text-gray-900 mb-4">Create New Resource</h4>
-          <form onSubmit={handleAddResource} className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Name</label>
-              <div className="mt-1">
-                <input type="text" required value={newName} onChange={(e) => setNewName(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
-              </div>
+        <div className="bg-[#FAFAFA] rounded-xl p-6 mb-8 border border-[#E4E4E7]">
+          <h4 className="text-xs font-bold text-[#52525B] uppercase tracking-widest mb-6">Asset Registration</h4>
+          
+          {errorMsg && (
+            <div className="mb-6 p-4 bg-[#FEF2F2] border border-[#FECACA] rounded-md text-[#EF4444] text-sm font-medium">
+              {errorMsg}
             </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Type</label>
-              <div className="mt-1">
-                <input type="text" required value={newType} onChange={(e) => setNewType(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
-              </div>
+          )}
+
+          <form onSubmit={handleAddResource} className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-bold text-[#52525B] uppercase tracking-wider mb-2">Asset Identifier</label>
+              <input type="text" required value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Projector A" className="block w-full text-sm border-[#E4E4E7] rounded-md p-2.5 text-[#09090B] bg-white border focus:ring-1 focus:ring-[#09090B] focus:outline-none" />
             </div>
-            <div className="sm:col-span-6 flex justify-end">
-              <button type="button" onClick={() => setShowAdd(false)} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">Cancel</button>
-              <button type="submit" className="bg-blue-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700">Save Resource</button>
+            
+            <div>
+              <label className="block text-xs font-bold text-[#52525B] uppercase tracking-wider mb-2">Asset Class</label>
+              <select required value={newType} onChange={(e) => setNewType(e.target.value)} className="block w-full text-sm border-[#E4E4E7] rounded-md p-2.5 text-[#09090B] bg-white border focus:ring-1 focus:ring-[#09090B] focus:outline-none">
+                <option value="ROOM">Space / Room</option>
+                <option value="EQUIPMENT">Hardware / Equipment</option>
+                <option value="VEHICLE">Vehicle</option>
+              </select>
+            </div>
+
+            <div className="sm:col-span-2 flex justify-end mt-4 border-t border-[#E4E4E7] pt-6">
+              <button type="button" onClick={() => setShowAdd(false)} className="bg-white py-2.5 px-6 border border-[#E4E4E7] rounded-md text-sm font-bold tracking-wide uppercase text-[#71717A] hover:bg-[#F4F4F5] mr-3 transition-colors">Cancel</button>
+              <button type="submit" className="bg-[#09090B] py-2.5 px-6 rounded-md text-sm font-bold tracking-wide uppercase text-white hover:bg-[#27272A] transition-colors">Register Asset</button>
             </div>
           </form>
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Campus Resources</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? <p>Loading...</p> : (
-            <div className="space-y-4">
-              {resources.length === 0 ? <p className="text-gray-500">No resources defined.</p> : resources.map(r => (
-                <div key={r.id} className="p-4 border rounded-lg bg-gray-50 flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{r.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">Type: {r.type}</p>
-                  </div>
-                  <Button variant="outline">Manage</Button>
-                </div>
-              ))}
+      <div>
+        {loading ? (
+          <div className="text-center p-12 border border-dashed border-[#D4D4D8] rounded-xl bg-[#FAFAFA]">
+            <p className="text-sm font-medium text-[#A1A1AA]">Auditing assets...</p>
+          </div>
+        ) : resources.length === 0 ? (
+          <div className="text-center p-12 border border-dashed border-[#D4D4D8] rounded-xl bg-[#FAFAFA]">
+            <p className="text-sm font-medium text-[#A1A1AA]">No assets registered in system.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-[#E4E4E7] border border-[#E4E4E7] rounded-xl overflow-hidden bg-white">
+            <div className="grid grid-cols-12 gap-4 p-4 bg-[#FAFAFA] border-b border-[#E4E4E7] text-xs font-bold text-[#71717A] uppercase tracking-wider">
+              <div className="col-span-8">Identifier</div>
+              <div className="col-span-4 text-right">Class</div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            {resources.map(r => (
+              <div key={r.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-[#FAFAFA] transition-colors">
+                <div className="col-span-8">
+                  <p className="text-sm font-bold text-[#09090B]">{r.name}</p>
+                </div>
+                <div className="col-span-4 text-right">
+                  <span className="inline-flex px-2 py-1 text-xs font-bold tracking-widest uppercase rounded border bg-[#F4F4F5] text-[#09090B] border-[#E4E4E7]">
+                    {r.type}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

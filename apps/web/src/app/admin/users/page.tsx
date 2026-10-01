@@ -1,143 +1,155 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getUsers } from '@campusos/api-client';
-import { Card, CardHeader, CardTitle, CardContent, Badge, Button, EmptyState } from '@/components/ui';
-import { UserPlus, Users, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getUsers, registerUser } from '@campusos/api-client';
+import { UserPlus } from 'lucide-react';
 
-export default function UsersPage() {
+export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const [showAdd, setShowAdd] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [newFullName, setNewFullName] = useState('');
-  const [newRole, setNewRole] = useState('STUDENT');
-
-  const loadUsers = () => {
-    getUsers().then(data => setUsers(data || [])).catch(console.error);
-  };
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('STUDENT');
 
   useEffect(() => {
-    loadUsers();
+    load();
   }, []);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const data = await getUsers();
+      setUsers(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg('');
     try {
-      const { createUser } = await import('@campusos/api-client');
-      await createUser({
-        email: newEmail,
-        password: newPassword,
-        full_name: newFullName,
-        role: newRole
+      await registerUser({
+        email: email.toLowerCase(),
+        password,
+        full_name: fullName,
+        role,
       });
       setShowAdd(false);
-      setNewEmail('');
-      setNewPassword('');
-      setNewFullName('');
-      setNewRole('STUDENT');
-      loadUsers();
-    } catch (err) {
+      setEmail('');
+      setPassword('');
+      setFullName('');
+      setRole('STUDENT');
+      load();
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to save user');
-    }
-  };
-
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case 'STUDENT': return <Badge variant="blue">Student</Badge>;
-      case 'TEACHER': return <Badge variant="teal">Teacher</Badge>;
-      case 'FACULTY': return <Badge variant="indigo">Faculty</Badge>;
-      case 'ADMIN': return <Badge variant="red">Admin</Badge>;
-      default: return <Badge variant="gray">{role}</Badge>;
+      setErrorMsg(err.response?.data?.detail || 'Failed to create user');
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="bg-white rounded-xl border border-[#E4E4E7] p-8 shadow-sm">
+      <div className="flex justify-between items-center mb-8 pb-4 border-b border-[#F4F4F5]">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-500">Manage students, teachers, and faculty accounts.</p>
+          <h3 className="text-xl font-bold tracking-tight text-[#09090B]">Identity Management</h3>
+          <p className="text-sm font-medium text-[#71717A] mt-1">Manage system access and roles.</p>
         </div>
-        <Button icon={<UserPlus size={18} />} onClick={() => setShowAdd(!showAdd)}>Add User</Button>
+        <button 
+          onClick={() => setShowAdd(!showAdd)}
+          className="inline-flex items-center px-4 py-2 text-sm font-bold tracking-wide uppercase rounded-md text-white bg-[#09090B] hover:bg-[#27272A] transition-colors"
+        >
+          {showAdd ? 'Close Panel' : 'Provision User'}
+        </button>
       </div>
 
       {showAdd && (
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h4 className="text-md font-medium text-gray-900 mb-4">Create New User</h4>
-          <form onSubmit={handleAddUser} className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
-              <div className="mt-1">
-                <input type="text" required value={newFullName} onChange={(e) => setNewFullName(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
-              </div>
+        <div className="bg-[#FAFAFA] rounded-xl p-6 mb-8 border border-[#E4E4E7]">
+          <h4 className="text-xs font-bold text-[#52525B] uppercase tracking-widest mb-6">New User Configuration</h4>
+          
+          {errorMsg && (
+            <div className="mb-6 p-4 bg-[#FEF2F2] border border-[#FECACA] rounded-md text-[#EF4444] text-sm font-medium">
+              {errorMsg}
             </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <div className="mt-1">
-                <input type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
-              </div>
+          )}
+
+          <form onSubmit={handleAddUser} className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-bold text-[#52525B] uppercase tracking-wider mb-2">Full Legal Name</label>
+              <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} className="block w-full text-sm border-[#E4E4E7] rounded-md p-2.5 text-[#09090B] bg-white border focus:ring-1 focus:ring-[#09090B] focus:outline-none" />
             </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <div className="mt-1">
-                <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
-              </div>
+            
+            <div>
+              <label className="block text-xs font-bold text-[#52525B] uppercase tracking-wider mb-2">Email Address</label>
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full text-sm border-[#E4E4E7] rounded-md p-2.5 text-[#09090B] bg-white border focus:ring-1 focus:ring-[#09090B] focus:outline-none" />
             </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Role</label>
-              <div className="mt-1">
-                <select value={newRole} onChange={(e) => setNewRole(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black">
-                  <option value="STUDENT">Student</option>
-                  <option value="TEACHER">Teacher</option>
-                  <option value="FACULTY">Faculty</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#52525B] uppercase tracking-wider mb-2">Temporary Password</label>
+              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full text-sm border-[#E4E4E7] rounded-md p-2.5 text-[#09090B] bg-white border focus:ring-1 focus:ring-[#09090B] focus:outline-none" />
             </div>
-            <div className="sm:col-span-6 flex justify-end">
-              <button type="button" onClick={() => setShowAdd(false)} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">Cancel</button>
-              <button type="submit" className="bg-blue-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700">Save User</button>
+
+            <div>
+              <label className="block text-xs font-bold text-[#52525B] uppercase tracking-wider mb-2">System Role</label>
+              <select required value={role} onChange={(e) => setRole(e.target.value)} className="block w-full text-sm border-[#E4E4E7] rounded-md p-2.5 text-[#09090B] bg-white border focus:ring-1 focus:ring-[#09090B] focus:outline-none">
+                <option value="STUDENT">STUDENT</option>
+                <option value="TEACHER">TEACHER</option>
+                <option value="FACULTY">FACULTY</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+
+            <div className="sm:col-span-2 flex justify-end mt-4 border-t border-[#E4E4E7] pt-6">
+              <button type="button" onClick={() => setShowAdd(false)} className="bg-white py-2.5 px-6 border border-[#E4E4E7] rounded-md text-sm font-bold tracking-wide uppercase text-[#71717A] hover:bg-[#F4F4F5] mr-3 transition-colors">Cancel</button>
+              <button type="submit" className="bg-[#09090B] py-2.5 px-6 rounded-md text-sm font-bold tracking-wide uppercase text-white hover:bg-[#27272A] transition-colors">Provision Identity</button>
             </div>
           </form>
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Users ({users.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {users.length === 0 ? (
-            <div className="p-6">
-              <EmptyState title="No Users Found" description="No users exist in the database." icon={<AlertCircle />} />
+      <div>
+        {loading ? (
+          <div className="text-center p-12 border border-dashed border-[#D4D4D8] rounded-xl bg-[#FAFAFA]">
+            <p className="text-sm font-medium text-[#A1A1AA]">Retrieving identities...</p>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="text-center p-12 border border-dashed border-[#D4D4D8] rounded-xl bg-[#FAFAFA]">
+            <p className="text-sm font-medium text-[#A1A1AA]">No users found in directory.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-[#E4E4E7] border border-[#E4E4E7] rounded-xl overflow-hidden bg-white">
+            <div className="grid grid-cols-12 gap-4 p-4 bg-[#FAFAFA] border-b border-[#E4E4E7] text-xs font-bold text-[#71717A] uppercase tracking-wider">
+              <div className="col-span-4">Identity</div>
+              <div className="col-span-4">Contact</div>
+              <div className="col-span-4 text-right">Clearance Level</div>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Name</th>
-                    <th className="px-6 py-4 font-medium">Email</th>
-                    <th className="px-6 py-4 font-medium">Role</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {users.map(user => (
-                    <tr key={user.id} className="hover:bg-gray-50/50">
-                      <td className="px-6 py-4 font-medium text-gray-900">{user.full_name}</td>
-                      <td className="px-6 py-4 text-gray-500">{user.email}</td>
-                      <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {users.map(u => (
+              <div key={u.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-[#FAFAFA] transition-colors">
+                <div className="col-span-4">
+                  <p className="text-sm font-bold text-[#09090B]">{u.full_name}</p>
+                </div>
+                <div className="col-span-4">
+                  <p className="text-sm font-medium text-[#52525B]">{u.email}</p>
+                </div>
+                <div className="col-span-4 text-right">
+                  <span className={`inline-flex px-2 py-1 text-xs font-bold tracking-widest uppercase rounded border ${
+                    u.role === 'ADMIN' ? 'bg-[#09090B] text-white' :
+                    u.role === 'TEACHER' ? 'bg-[#F4F4F5] text-[#09090B] border-[#E4E4E7]' :
+                    'bg-white text-[#71717A] border-[#E4E4E7]'
+                  }`}>
+                    {u.role}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

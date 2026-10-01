@@ -1,33 +1,27 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Bell, LogOut, Menu, User, ChevronRight } from 'lucide-react';
+import { Menu, LogOut, Bell, Search, User, X } from 'lucide-react';
 import { useCampusWebSocket } from '@/hooks/useCampusWebSocket';
 
-interface SidebarLink {
-  name: string;
-  path: string;
-  icon?: React.ReactNode;
-}
-
 interface SidebarLayoutProps {
+  children: React.ReactNode;
   title: string;
   subtitle: string;
-  links: SidebarLink[];
+  links: { name: string; path: string; icon?: React.ReactNode }[];
   onLogout: () => void;
-  children: React.ReactNode;
   theme?: 'blue' | 'teal' | 'indigo' | 'gray';
 }
 
 export function SidebarLayout({
+  children,
   title,
   subtitle,
   links,
   onLogout,
-  children,
-  theme = 'blue'
+  theme = 'blue',
 }: SidebarLayoutProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -36,7 +30,9 @@ export function SidebarLayout({
   const { notifications } = useCampusWebSocket();
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  
+  // Toast state
+  const [latestToast, setLatestToast] = useState<{message: string, id: number} | null>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -51,28 +47,35 @@ export function SidebarLayout({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Unified light sidebar — one ResoSync identity for all roles
-  const roleAccentClass: Record<string, string> = {
-    blue: 'text-emerald-600',
-    teal: 'text-teal-600',
-    indigo: 'text-emerald-700',
-    gray: 'text-slate-700',
-  };
-
-  const roleActiveBg: Record<string, string> = {
-    blue: 'bg-emerald-50 text-emerald-700',
-    teal: 'bg-teal-50 text-teal-700',
-    indigo: 'bg-emerald-50 text-emerald-800',
-    gray: 'bg-slate-100 text-slate-900',
-  };
-
-  const accent = roleAccentClass[theme] || roleAccentClass.blue;
-  const activeBg = roleActiveBg[theme] || roleActiveBg.blue;
+  // Show toast when new notification arrives
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const latest = notifications[notifications.length - 1];
+      const toastId = Date.now();
+      setLatestToast({ message: latest.message, id: toastId });
+      
+      const timer = setTimeout(() => {
+        setLatestToast(current => current?.id === toastId ? null : current);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notifications]);
 
   return (
     <div className="flex h-screen bg-[#F4F4F5] font-sans selection:bg-[#0F172A] selection:text-white">
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* LIVE TOAST NOTIFICATION */}
+      {latestToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#09090B] text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-5">
+          <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+          <span className="text-sm font-medium">{latestToast.message}</span>
+          <button onClick={() => setLatestToast(null)} className="text-[#A1A1AA] hover:text-white ml-2">
+            <X size={16} />
+          </button>
+        </div>
       )}
 
       {/* COMMAND CENTER SIDEBAR */}
