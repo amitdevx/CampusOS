@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { getMe, setAuthToken } from '@campusos/api-client';
-import { User, Mail, Shield, LogOut, ChevronRight } from 'lucide-react-native';
+import { User, Mail, Shield, LogOut } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { colors } from '../theme/colors';
 
@@ -27,7 +27,6 @@ export default function ProfileScreen({ navigation }: Props) {
         const data = await getMe();
         setUser(data);
       } catch {
-        // User token may be expired; let them log out manually
       } finally {
         setLoading(false);
       }
@@ -54,12 +53,12 @@ export default function ProfileScreen({ navigation }: Props) {
     <Screen style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>SYSTEM IDENTITY</Text>
         </View>
 
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
-            <User size={40} color={colors.primary} />
+            <User size={32} color={colors.surface} />
           </View>
           <Text style={styles.name}>{user?.full_name || 'Unknown User'}</Text>
           <View style={styles.roleBadge}>
@@ -68,23 +67,23 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Details</Text>
+          <Text style={styles.sectionTitle}>ACCOUNT DIRECTORY</Text>
           <View style={styles.menuItem}>
             <View style={styles.menuIconBox}>
-              <Mail size={20} color={colors.textSecondary} />
+              <Mail size={18} color={colors.primary} />
             </View>
             <View style={styles.menuTextContainer}>
-              <Text style={styles.menuLabel}>Email</Text>
+              <Text style={styles.menuLabel}>REGISTERED EMAIL</Text>
               <Text style={styles.menuValue}>{user?.email}</Text>
             </View>
           </View>
           
           <View style={[styles.menuItem, styles.noBorder]}>
             <View style={styles.menuIconBox}>
-              <Shield size={20} color={colors.textSecondary} />
+              <Shield size={18} color={colors.primary} />
             </View>
             <View style={styles.menuTextContainer}>
-              <Text style={styles.menuLabel}>Role</Text>
+              <Text style={styles.menuLabel}>ACCESS CLEARANCE</Text>
               <Text style={styles.menuValue}>{user?.role}</Text>
             </View>
           </View>
@@ -93,8 +92,8 @@ export default function ProfileScreen({ navigation }: Props) {
         <View style={styles.spacer} />
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
-          <LogOut size={20} color={colors.danger} style={styles.logoutIcon} />
-          <Text style={styles.logoutText}>Sign Out</Text>
+          <LogOut size={18} color={colors.surface} style={styles.logoutIcon} />
+          <Text style={styles.logoutText}>TERMINATE SESSION</Text>
         </TouchableOpacity>
       </View>
     </Screen>
@@ -108,79 +107,77 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 20,
+    padding: 24,
   },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     marginBottom: 24,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 14,
     fontWeight: '800',
-    color: colors.text,
+    color: colors.textSecondary,
+    letterSpacing: 2,
   },
   profileCard: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: 24,
+    backgroundColor: colors.primary,
+    padding: 32,
     borderRadius: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
     marginBottom: 32,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#eff6ff',
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  name: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: 8 },
+  name: { fontSize: 24, fontWeight: '800', color: colors.surface, marginBottom: 12, letterSpacing: -0.5 },
   roleBadge: {
-    backgroundColor: '#e0e7ff',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 6,
   },
   roleText: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    color: colors.border,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
   },
   section: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
     elevation: 2,
     borderWidth: 1,
     borderColor: colors.border,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textSecondary,
     marginBottom: 16,
-    paddingHorizontal: 8,
+    letterSpacing: 1.5,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.background,
   },
   noBorder: {
     borderBottomWidth: 0,
@@ -188,23 +185,27 @@ const styles = StyleSheet.create({
   menuIconBox: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: 8,
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   menuTextContainer: {
     flex: 1,
   },
   menuLabel: {
-    fontSize: 13,
+    fontSize: 9,
+    fontWeight: '800',
     color: colors.textSecondary,
-    marginBottom: 2,
+    marginBottom: 4,
+    letterSpacing: 1,
   },
   menuValue: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.text,
   },
   spacer: {
@@ -212,16 +213,19 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     flexDirection: 'row',
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.danger,
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#fee2e2',
+    shadowColor: colors.danger,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logoutIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
-  logoutText: { color: colors.danger, fontWeight: '700', fontSize: 16 },
+  logoutText: { color: colors.surface, fontWeight: '800', fontSize: 13, letterSpacing: 1.5 },
 });
