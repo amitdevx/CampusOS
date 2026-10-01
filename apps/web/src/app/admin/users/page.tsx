@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getUsers, registerUser } from '@campusos/api-client';
+import { getUsers, createUser } from '@campusos/api-client';
 import { UserPlus } from 'lucide-react';
 
 export default function AdminUsersPage() {
@@ -35,7 +35,7 @@ export default function AdminUsersPage() {
     e.preventDefault();
     setErrorMsg('');
     try {
-      await registerUser({
+      await createUser({
         email: email.toLowerCase(),
         password,
         full_name: fullName,
