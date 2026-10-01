@@ -1,70 +1,130 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+  SafeAreaView,
+  Dimensions,
+} from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
-import { useNavigation } from '@react-navigation/native';
-
+import { X, Zap, CheckCircle } from 'lucide-react-native';
 import { markAttendance } from '@campusos/api-client';
+import { colors } from '../theme/colors';
+
+const { width } = Dimensions.get('window');
+const QR_SIZE = width * 0.65;
+
+type ScanState = 'scanning' | 'processing' | 'success' | 'error';
+
+interface SuccessData {
+  sessionId: number;
+  markedAt: string;
+}
 
 export default function ScanScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const [scanState, setScanState] = useState<ScanState>('scanning');
+  const [successData, setSuccessData] = useState<SuccessData | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    const getCameraPermissions = async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    };
-    getCameraPermissions();
+    Camera.requestCameraPermissionsAsync().then(({ status }) =>
+      setHasPermission(status === 'granted')
+    );
   }, []);
 
-  const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
-    if (processing) return;
+  const resetScan = () => {
+    setScanned(false);
+    setScanState('scanning');
+    setSuccessData(null);
+    setErrorMsg('');
+  };
+
+  const handleBarCodeScanned = async ({ data }: { type: string; data: string }) => {
+    if (scanned) return;
     setScanned(true);
-    setProcessing(true);
+    setScanState('processing');
+
     try {
       const parsedData = JSON.parse(data);
       const sessionId = parsedData.session || parsedData.sessionId;
       const secret = parsedData.token || parsedData.secret;
-      
+
       if (parsedData.type === 'ATTENDANCE' && sessionId && secret) {
-        
         await markAttendance(sessionId, secret);
-        
-        Alert.alert(
-          '✓ Attendance Marked',
-          `Successfully checked in for Session #${sessionId}`,
-          [{ text: 'Done', onPress: () => { setScanned(false); setProcessing(false); } }]
-        );
+        setSuccessData({ sessionId, markedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+        setScanState('success');
       } else {
-        throw new Error("Invalid format");
+        throw new Error('Invalid QR format');
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.detail || 'QR Code Expired or Invalid.\nAsk your teacher to generate a new one.';
-      Alert.alert('QR Error', msg, [
-        { text: 'Scan Again', onPress: () => { setScanned(false); setProcessing(false); } },
-      ]);
+      const msg = error?.response?.data?.detail || 'QR code is invalid or expired.';
+      setErrorMsg(msg);
+      setScanState('error');
     }
   };
 
   if (hasPermission === null) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.text}>Requesting camera permission...</Text>
+      <View style={styles.permissionContainer}>
+        <Text style={styles.permissionText}>Requesting camera permission...</Text>
       </View>
     );
   }
+
   if (hasPermission === false) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.text}>Camera permission required</Text>
-        <Text style={[styles.text, { marginTop: 10, textAlign: 'center', marginHorizontal: 20 }]}>
-          ResoSync needs camera access to scan attendance QR codes.
-        </Text>
-        <TouchableOpacity style={styles.rescanButton} onPress={() => Linking.openSettings()}>
-          <Text style={styles.rescanText}>Open Settings</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.permissionContainer}>
+        <View style={styles.permissionCard}>
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionDesc}>
+            ResoSync needs camera access to scan attendance QR codes from your instructor.
+          </Text>
+          <TouchableOpacity style={styles.permissionButton} onPress={() => Linking.openSettings()}>
+            <Text style={styles.permissionButtonText}>Open Settings</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (scanState === 'success' && successData) {
+    return (
+      <SafeAreaView style={styles.successContainer}>
+        <View style={styles.successCard}>
+          <View style={styles.successIconWrap}>
+            <CheckCircle size={56} color={colors.success} strokeWidth={1.5} />
+          </View>
+          <Text style={styles.successTitle}>Attendance Marked</Text>
+          <Text style={styles.successSubtitle}>
+            Session #{successData.sessionId}
+          </Text>
+          <Text style={styles.successTime}>Marked at {successData.markedAt}</Text>
+          <TouchableOpacity style={styles.doneButton} onPress={resetScan}>
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (scanState === 'error') {
+    return (
+      <SafeAreaView style={styles.successContainer}>
+        <View style={styles.errorCard}>
+          <View style={styles.errorIconWrap}>
+            <X size={48} color={colors.danger} strokeWidth={1.5} />
+          </View>
+          <Text style={styles.errorTitle}>Scan Failed</Text>
+          <Text style={styles.errorMsg}>{errorMsg}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={resetScan}>
+            <Text style={styles.retryButtonText}>Scan Again</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -72,74 +132,243 @@ export default function ScanScreen() {
     <View style={styles.container}>
       <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: ["qr"],
-        }}
+        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.overlay}>
-        <View style={styles.scannerBox} />
-        <Text style={styles.instructionText}>
-          Point your camera at the instructor's QR code
+
+      {/* Dark overlay with QR cutout */}
+      <View style={styles.overlay} pointerEvents="none">
+        <View style={styles.overlayTop} />
+        <View style={styles.overlayMiddle}>
+          <View style={styles.overlaySide} />
+          <View style={styles.qrFrame}>
+            {/* Corner marks */}
+            <View style={[styles.corner, styles.topLeft]} />
+            <View style={[styles.corner, styles.topRight]} />
+            <View style={[styles.corner, styles.bottomLeft]} />
+            <View style={[styles.corner, styles.bottomRight]} />
+          </View>
+          <View style={styles.overlaySide} />
+        </View>
+        <View style={styles.overlayBottom} />
+      </View>
+
+      {/* Top bar */}
+      <SafeAreaView style={styles.topBar}>
+        <Text style={styles.title}>Scan Attendance</Text>
+      </SafeAreaView>
+
+      {/* Bottom instructions */}
+      <View style={styles.bottomBar}>
+        <Text style={styles.instruction}>
+          {scanState === 'processing' ? 'Processing...' : 'Align the QR code inside the frame'}
         </Text>
-        {scanned && (
-          <TouchableOpacity style={styles.rescanButton} onPress={() => setScanned(false)}>
-            <Text style={styles.rescanText}>Tap to Scan Again</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </View>
   );
 }
 
+const OVERLAY_COLOR = 'rgba(0,0,0,0.72)';
+const CORNER_SIZE = 24;
+const CORNER_WIDTH = 3;
+
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: '#000' },
+  permissionContainer: {
     flex: 1,
-  },
-  center: {
-    flex: 1,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    padding: 24,
   },
-  text: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
+  permissionCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: 32,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    maxWidth: 340,
   },
-  scannerBox: {
-    width: 250,
-    height: 250,
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-    backgroundColor: 'transparent',
-    marginBottom: 40,
-  },
-  instructionText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  permissionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 12,
     textAlign: 'center',
+  },
+  permissionDesc: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
+  },
+  permissionButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 14,
+  },
+  permissionButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  permissionText: { color: colors.textSecondary, fontSize: 16 },
+
+  // Overlay
+  overlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, flexDirection: 'column' },
+  overlayTop: { flex: 1, backgroundColor: OVERLAY_COLOR },
+  overlayMiddle: { flexDirection: 'row', height: QR_SIZE },
+  overlaySide: { flex: 1, backgroundColor: OVERLAY_COLOR },
+  overlayBottom: { flex: 1, backgroundColor: OVERLAY_COLOR },
+  qrFrame: {
+    width: QR_SIZE,
+    height: QR_SIZE,
+    backgroundColor: 'transparent',
+  },
+
+  // Corners
+  corner: {
+    position: 'absolute',
+    width: CORNER_SIZE,
+    height: CORNER_SIZE,
+    borderColor: '#FFFFFF',
+  },
+  topLeft: { top: 0, left: 0, borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
+  topRight: { top: 0, right: 0, borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
+  bottomLeft: { bottom: 0, left: 0, borderBottomWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
+  bottomRight: { bottom: 0, right: 0, borderBottomWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
+
+  // UI elements
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingTop: 16,
+  },
+  title: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  instruction: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 24,
+    overflow: 'hidden',
   },
-  rescanButton: {
-    marginTop: 20,
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+
+  // Success
+  successContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
-  rescanText: {
-    color: 'white',
-    fontWeight: 'bold',
+  successCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 28,
+    padding: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    width: '100%',
+    maxWidth: 340,
+  },
+  successIconWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.successLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  successTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  successSubtitle: {
     fontSize: 16,
+    color: colors.textSecondary,
+    fontWeight: '500',
+    marginBottom: 4,
+    textAlign: 'center',
   },
+  successTime: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginBottom: 32,
+  },
+  doneButton: {
+    backgroundColor: colors.success,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 14,
+    width: '100%',
+    alignItems: 'center',
+  },
+  doneButtonText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+
+  // Error
+  errorCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 28,
+    padding: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    width: '100%',
+    maxWidth: 340,
+  },
+  errorIconWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.dangerLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.danger,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMsg: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 14,
+    width: '100%',
+    alignItems: 'center',
+  },
+  retryButtonText: { color: '#fff', fontWeight: '700', fontSize: 17 },
 });

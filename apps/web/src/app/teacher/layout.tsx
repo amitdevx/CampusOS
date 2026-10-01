@@ -11,15 +11,18 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('userToken');
-    const role = localStorage.getItem('userRole');
-    
-    if (!token || (role !== 'TEACHER')) {
-      router.replace('/login');
-    } else {
-      setAuthToken(token);
-      setIsReady(true);
-    }
+    const checkAuth = () => {
+      const token = localStorage.getItem('userToken');
+      const role = localStorage.getItem('userRole');
+      
+      if (!token || (role !== 'TEACHER')) {
+        router.replace('/login');
+      } else {
+        setAuthToken(token);
+        setIsReady(true);
+      }
+    };
+    checkAuth();
   }, [router]);
 
   const handleLogout = () => {

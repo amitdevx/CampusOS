@@ -1,4 +1,4 @@
-# CampusOS
+# ResoSync
 
 A zero-cost-dependency college management system.
 

@@ -1,15 +1,33 @@
+// ResoSync Design System — Color Tokens
 export const colors = {
-  primary: '#2563eb', // blue-600
-  primaryDark: '#1e40af', // blue-800
-  secondary: '#0d9488', // teal-600
-  accent: '#4f46e5', // indigo-600
-  background: '#f9fafb', // gray-50
-  surface: '#ffffff',
-  text: '#111827', // gray-900
-  textSecondary: '#6b7280', // gray-500
-  textMuted: '#9ca3af', // gray-400
-  border: '#e5e7eb', // gray-200
-  success: '#16a34a', // green-600
-  danger: '#dc2626', // red-600
-  warning: '#ca8a04', // yellow-600
+  // Brand
+  primary: '#2563EB',      // blue-600
+  primaryDark: '#1D4ED8',  // blue-700
+  primaryLight: '#EFF6FF', // blue-50
+  secondary: '#0D9488',    // teal-600
+  accent: '#4F46E5',       // indigo-600
+
+  // Neutral
+  background: '#F8FAFC',   // slate-50
+  surface: '#FFFFFF',
+  text: '#0F172A',         // slate-900
+  textSecondary: '#64748B', // slate-500
+  textMuted: '#94A3B8',    // slate-400
+  border: '#E2E8F0',       // slate-200
+
+  // Semantic
+  success: '#16A34A',      // green-600
+  successLight: '#F0FDF4', // green-50
+  danger: '#DC2626',       // red-600
+  dangerLight: '#FEF2F2',  // red-50
+  warning: '#D97706',      // amber-600
+  warningLight: '#FFFBEB', // amber-50
+  info: '#0891B2',         // cyan-600
+  infoLight: '#ECFEFF',    // cyan-50
+
+  // Roles
+  student: '#2563EB',
+  teacher: '#0D9488',
+  faculty: '#7C3AED',
+  admin: '#1E293B',
 };

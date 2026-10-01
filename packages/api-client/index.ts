@@ -194,6 +194,11 @@ export const getSubjects = async () => {
   return response.data;
 };
 
+export const getBatches = async () => {
+  const response = await apiClient.get('/api/v1/academic/batches');
+  return response.data;
+};
+
 export const getDivisions = async () => {
   const response = await apiClient.get('/api/v1/academic/divisions');
   return response.data;

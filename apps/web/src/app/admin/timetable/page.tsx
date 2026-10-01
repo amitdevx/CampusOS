@@ -1,17 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getClasses } from '@campusos/api-client';
+import { getClasses, getSubjects, getUsers } from '@campusos/api-client';
 
 export default function TimetablePage() {
   const [classes, setClasses] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
 
   useEffect(() => {
     loadClasses();
+    getSubjects().then(setSubjects).catch(console.error);
+    getUsers().then(users => {
+      const t = users.filter((u: any) => u.role === 'TEACHER' || u.role === 'FACULTY');
+      setTeachers(t);
+    }).catch(console.error);
   }, []);
 
   const [showAdd, setShowAdd] = useState(false);
   const [newSubjectId, setNewSubjectId] = useState('');
+  const [newTeacherId, setNewTeacherId] = useState('');
   const [newRoom, setNewRoom] = useState('');
   const [newStartTime, setNewStartTime] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
@@ -34,10 +42,11 @@ export default function TimetablePage() {
         room: newRoom,
         start_time: new Date(newStartTime).toISOString(),
         end_time: new Date(newEndTime).toISOString(),
-        teacher_id: 1, // Default or mock value
+        teacher_id: parseInt(newTeacherId),
       });
       setShowAdd(false);
       setNewSubjectId('');
+      setNewTeacherId('');
       setNewRoom('');
       setNewStartTime('');
       setNewEndTime('');
@@ -65,9 +74,21 @@ export default function TimetablePage() {
           <h4 className="text-md font-medium text-gray-900 mb-4">Schedule New Class</h4>
           <form onSubmit={handleAddClass} className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Subject ID</label>
+              <label className="block text-sm font-medium text-gray-700">Subject</label>
               <div className="mt-1">
-                <input type="number" required value={newSubjectId} onChange={(e) => setNewSubjectId(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black" />
+                <select required value={newSubjectId} onChange={(e) => setNewSubjectId(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black bg-white">
+                  <option value="">Select Subject...</option>
+                  {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700">Teacher</label>
+              <div className="mt-1">
+                <select required value={newTeacherId} onChange={(e) => setNewTeacherId(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md border p-2 text-black bg-white">
+                  <option value="">Select Teacher...</option>
+                  {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                </select>
               </div>
             </div>
             <div className="sm:col-span-3">

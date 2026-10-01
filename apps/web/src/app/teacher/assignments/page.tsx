@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAssignments, createAssignment } from '@campusos/api-client';
+import { getAssignments, createAssignment, getSubjects, getBatches } from '@campusos/api-client';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
 
 export default function TeacherAssignmentsPage() {
@@ -15,8 +15,13 @@ export default function TeacherAssignmentsPage() {
   const [subjectId, setSubjectId] = useState('');
   const [batchId, setBatchId] = useState('');
 
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
+
   useEffect(() => {
     load();
+    getSubjects().then(setSubjects).catch(console.error);
+    getBatches().then(setBatches).catch(console.error);
   }, []);
 
   async function load() {
@@ -79,12 +84,22 @@ export default function TeacherAssignmentsPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Subject ID</label>
-                  <input type="number" required value={subjectId} onChange={e => setSubjectId(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md text-gray-900" />
+                  <label className="block text-sm font-medium text-gray-700">Subject</label>
+                  <select required value={subjectId} onChange={e => setSubjectId(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md text-gray-900 bg-white">
+                    <option value="">Select...</option>
+                    {subjects.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Batch ID</label>
-                  <input type="number" required value={batchId} onChange={e => setBatchId(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md text-gray-900" />
+                  <label className="block text-sm font-medium text-gray-700">Batch</label>
+                  <select required value={batchId} onChange={e => setBatchId(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md text-gray-900 bg-white">
+                    <option value="">Select...</option>
+                    {batches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <Button type="submit" className="w-full">Create Assignment</Button>
@@ -105,8 +120,8 @@ export default function TeacherAssignmentsPage() {
                       <h3 className="font-semibold text-gray-900">{a.title}</h3>
                       <p className="text-sm text-gray-600 mt-1">{a.description}</p>
                       <div className="flex gap-4 mt-3 text-xs text-gray-500">
-                        <span>Subject: {a.subject_id}</span>
-                        <span>Batch: {a.batch_id}</span>
+                        <span>Subject: {subjects.find(s => s.id === a.subject_id)?.name || a.subject_id}</span>
+                        <span>Batch: {batches.find(b => b.id === a.batch_id)?.name || a.batch_id}</span>
                         <span>Due: {new Date(a.due_date).toLocaleDateString()}</span>
                       </div>
                     </div>

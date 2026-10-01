@@ -8,10 +8,6 @@ export default function TeacherMarksPage() {
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    load();
-  }, []);
-
   async function load() {
     setLoading(true);
     try {
@@ -23,6 +19,10 @@ export default function TeacherMarksPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">

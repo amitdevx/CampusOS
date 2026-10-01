@@ -1,12 +1,13 @@
-import { setAuthToken, getMe } from "@campusos/api-client";
-import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Home, BookOpen, Calendar, Scan, User } from 'lucide-react-native';
+import { Home, BookOpen, Calendar, Scan, User, MapPin } from 'lucide-react-native';
+import * as SecureStore from "expo-secure-store";
+import { setAuthToken, getMe, updatePushToken } from "@campusos/api-client";
+import { usePushNotifications } from './hooks/usePushNotifications';
 
 import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
@@ -15,6 +16,7 @@ import EventsScreen from './screens/EventsScreen';
 import ScanScreen from './screens/ScanScreen';
 import GenerateQRScreen from './screens/GenerateQRScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import ResourcesScreen from './screens/ResourcesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -31,6 +33,7 @@ function StudentNavigator() {
           if (route.name === 'Classes') return <BookOpen color={color} size={size} />;
           if (route.name === 'Scan QR') return <Scan color={color} size={size} />;
           if (route.name === 'Events') return <Calendar color={color} size={size} />;
+          if (route.name === 'Resources') return <MapPin color={color} size={size} />;
           if (route.name === 'Profile') return <User color={color} size={size} />;
         },
       })}
@@ -39,6 +42,7 @@ function StudentNavigator() {
       <Tab.Screen name="Classes" component={ClassesScreen} />
       <Tab.Screen name="Scan QR" component={ScanScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Resources" component={ResourcesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -56,6 +60,7 @@ function TeacherNavigator() {
           if (route.name === 'Classes') return <BookOpen color={color} size={size} />;
           if (route.name === 'Generate QR') return <Scan color={color} size={size} />;
           if (route.name === 'Events') return <Calendar color={color} size={size} />;
+          if (route.name === 'Resources') return <MapPin color={color} size={size} />;
           if (route.name === 'Profile') return <User color={color} size={size} />;
         },
       })}
@@ -64,6 +69,7 @@ function TeacherNavigator() {
       <Tab.Screen name="Classes" component={ClassesScreen} />
       <Tab.Screen name="Generate QR" component={GenerateQRScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Resources" component={ResourcesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -80,6 +86,7 @@ function StaffNavigator() {
           if (route.name === 'Home') return <Home color={color} size={size} />;
           if (route.name === 'Classes') return <BookOpen color={color} size={size} />;
           if (route.name === 'Events') return <Calendar color={color} size={size} />;
+          if (route.name === 'Resources') return <MapPin color={color} size={size} />;
           if (route.name === 'Profile') return <User color={color} size={size} />;
         },
       })}
@@ -87,6 +94,7 @@ function StaffNavigator() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Classes" component={ClassesScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Resources" component={ResourcesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -104,10 +112,6 @@ function MainNavigator({ route }: any) {
   return <StudentNavigator />;
 }
 
-
-import { usePushNotifications } from './hooks/usePushNotifications';
-import { updatePushToken } from '@campusos/api-client';
-
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [initialRoute, setInitialRoute] = useState<'Login' | 'Main'>('Login');
@@ -122,12 +126,9 @@ export default function App() {
         const cachedRole = await SecureStore.getItemAsync('userRole');
         
         if (token && cachedRole) {
-          // Restore local session IMMEDIATELY. Don't block on network.
           setAuthToken(token);
           setInitialRole(cachedRole);
           setInitialRoute('Main');
-          
-          // Trigger a non-blocking background validation
           validateSessionInBackground();
         }
       } catch (e) {
@@ -140,18 +141,14 @@ export default function App() {
     async function validateSessionInBackground() {
       try {
         const user = await getMe();
-        // If successful, update the cached role just in case it changed
         await SecureStore.setItemAsync('userRole', user.role);
         setInitialRole(user.role);
       } catch (err: any) {
         const status = err?.response?.status;
-        // ONLY log out if it's a definitive auth failure (401/403). 
-        // 5xx or timeouts (like Render sleep) should KEEP the session.
         if (status === 401 || status === 403) {
           await SecureStore.deleteItemAsync('userToken');
           await SecureStore.deleteItemAsync('userRole');
           setAuthToken(null);
-          // Normally we'd force navigation to Login here via a ref or context
         }
       }
     }
@@ -166,7 +163,7 @@ export default function App() {
   }, [initialRoute, expoPushToken]);
 
   if (!isReady) {
-    return null; // Very brief, only blocks for SecureStore read (ms)
+    return null;
   }
 
   return (
