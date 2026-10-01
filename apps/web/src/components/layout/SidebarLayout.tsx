@@ -52,18 +52,17 @@ export function SidebarLayout({
   }, []);
 
   // Unified light sidebar — one ResoSync identity for all roles
-  // The role is conveyed via the badge/subtitle, not the entire sidebar color
   const roleAccentClass: Record<string, string> = {
-    blue: 'text-blue-600',
+    blue: 'text-emerald-600',
     teal: 'text-teal-600',
-    indigo: 'text-indigo-600',
+    indigo: 'text-emerald-700',
     gray: 'text-slate-700',
   };
 
   const roleActiveBg: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-700',
+    blue: 'bg-emerald-50 text-emerald-700',
     teal: 'bg-teal-50 text-teal-700',
-    indigo: 'bg-indigo-50 text-indigo-700',
+    indigo: 'bg-emerald-50 text-emerald-800',
     gray: 'bg-slate-100 text-slate-900',
   };
 
@@ -79,12 +78,12 @@ export function SidebarLayout({
       <aside className={`fixed inset-y-0 left-0 z-30 w-64 transform transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 flex flex-col bg-white border-r border-slate-200 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo */}
         <div className="p-6 flex items-center gap-3 border-b border-slate-100">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm">
             <span className="text-white font-bold text-base leading-none">R</span>
           </div>
           <div>
-            <span className="text-lg font-bold text-slate-900 tracking-tight leading-none">ResoSync</span>
-            <p className={`text-xs font-semibold mt-0.5 uppercase tracking-wider ${accent}`}>{subtitle}</p>
+            <span className="text-xl font-bold text-slate-900 tracking-tight leading-none">ResoSync</span>
+            <p className={`text-[10px] font-bold mt-0.5 uppercase tracking-widest ${accent}`}>{subtitle}</p>
           </div>
         </div>
 
@@ -134,19 +133,19 @@ export function SidebarLayout({
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4 relative">
-              <div className="hidden md:flex relative text-slate-400 focus-within:text-blue-500">
+              <div className="hidden md:flex relative text-slate-400 focus-within:text-emerald-500">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="bg-slate-50 text-sm border border-slate-200 rounded-full pl-9 pr-4 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400"
+                  className="bg-slate-50 text-sm border border-slate-200 rounded-full pl-9 pr-4 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400"
                 />
               </div>
 
               <div ref={notifRef} className="relative">
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
-                  className="relative p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition-colors"
+                  className="relative p-2 text-slate-500 hover:text-emerald-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
                   <Bell size={18} />
                   {notifications.length > 0 && (
@@ -172,7 +171,7 @@ export function SidebarLayout({
               <div ref={profileRef} className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="h-8 w-8 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center border border-blue-200 hover:bg-blue-100 transition-colors"
+                  className="h-8 w-8 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center border border-emerald-200 hover:bg-emerald-100 transition-colors"
                 >
                   <User size={15} />
                 </button>
