@@ -77,7 +77,7 @@ export default function QRPage() {
             />
           </div>
           <p className="text-sm font-medium text-gray-700 text-center">
-            Have students scan this QR code with the CampusOS Mobile App<br/>
+            Have students scan this QR code with the ResoSync Mobile App<br/>
             to mark their attendance for Session #{sessionData.id}
           </p>
         </div>

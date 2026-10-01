@@ -1,6 +1,6 @@
 import { setAuthToken, getMe } from "@campusos/api-client";
 import * as SecureStore from "expo-secure-store";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -109,42 +109,64 @@ import { usePushNotifications } from './hooks/usePushNotifications';
 import { updatePushToken } from '@campusos/api-client';
 
 export default function App() {
-  const [isReady, setIsReady] = React.useState(false);
-  const [initialRoute, setInitialRoute] = React.useState<'Login' | 'Main'>('Login');
-  const [initialRole, setInitialRole] = React.useState('STUDENT');
+  const [isReady, setIsReady] = useState(false);
+  const [initialRoute, setInitialRoute] = useState<'Login' | 'Main'>('Login');
+  const [initialRole, setInitialRole] = useState('STUDENT');
   
   const { expoPushToken } = usePushNotifications();
 
-  React.useEffect(() => {
+  useEffect(() => {
     async function restoreSession() {
       try {
         const token = await SecureStore.getItemAsync('userToken');
-        if (token) {
+        const cachedRole = await SecureStore.getItemAsync('userRole');
+        
+        if (token && cachedRole) {
+          // Restore local session IMMEDIATELY. Don't block on network.
           setAuthToken(token);
-          const user = await getMe();
-          setInitialRole(user.role);
+          setInitialRole(cachedRole);
           setInitialRoute('Main');
+          
+          // Trigger a non-blocking background validation
+          validateSessionInBackground();
         }
       } catch (e) {
-        // Token invalid or network error
-        await SecureStore.deleteItemAsync('userToken');
-        await SecureStore.deleteItemAsync('userRole');
-        setAuthToken(null);
+        console.error("Session restore error", e);
       } finally {
         setIsReady(true);
       }
     }
+    
+    async function validateSessionInBackground() {
+      try {
+        const user = await getMe();
+        // If successful, update the cached role just in case it changed
+        await SecureStore.setItemAsync('userRole', user.role);
+        setInitialRole(user.role);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        // ONLY log out if it's a definitive auth failure (401/403). 
+        // 5xx or timeouts (like Render sleep) should KEEP the session.
+        if (status === 401 || status === 403) {
+          await SecureStore.deleteItemAsync('userToken');
+          await SecureStore.deleteItemAsync('userRole');
+          setAuthToken(null);
+          // Normally we'd force navigation to Login here via a ref or context
+        }
+      }
+    }
+
     restoreSession();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialRoute === 'Main' && expoPushToken?.data) {
       updatePushToken(expoPushToken.data).catch(console.error);
     }
   }, [initialRoute, expoPushToken]);
 
   if (!isReady) {
-    return null; // Or a splash screen component
+    return null; // Very brief, only blocks for SecureStore read (ms)
   }
 
   return (

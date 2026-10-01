@@ -2,6 +2,7 @@ import axios from 'axios';
 
 export const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://campusos-api-3r6a.onrender.com',
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },

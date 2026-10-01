@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   if (!isReady) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Loading CampusOS...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Loading ResoSync...</div>;
   }
 
   const links = [
@@ -44,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <SidebarLayout
-      title="CampusOS"
+      title="ResoSync"
       subtitle="Admin Portal"
       links={links}
       onLogout={handleLogout}

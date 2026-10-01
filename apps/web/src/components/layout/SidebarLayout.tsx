@@ -109,7 +109,7 @@ export function SidebarLayout({
             <div className="flex items-center gap-4 sm:gap-6 relative">
               <div className="hidden md:flex relative text-gray-400 focus-within:text-blue-500">
                 <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2" />
-                <input type="text" placeholder="Search CampusOS..." className="bg-gray-100 text-sm border-none rounded-full pl-10 pr-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-gray-800" />
+                <input type="text" placeholder="Search ResoSync..." className="bg-gray-100 text-sm border-none rounded-full pl-10 pr-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-gray-800" />
               </div>
               
               <div ref={notifRef} className="relative">

@@ -59,7 +59,7 @@ export default function ScanScreen() {
       <View style={styles.center}>
         <Text style={styles.text}>Camera permission required</Text>
         <Text style={[styles.text, { marginTop: 10, textAlign: 'center', marginHorizontal: 20 }]}>
-          CampusOS needs camera access to scan attendance QR codes.
+          ResoSync needs camera access to scan attendance QR codes.
         </Text>
         <TouchableOpacity style={styles.rescanButton} onPress={() => Linking.openSettings()}>
           <Text style={styles.rescanText}>Open Settings</Text>

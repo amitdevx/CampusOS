@@ -103,7 +103,7 @@ export default function TeacherQRPage() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Session #{sessionData.id} Active</h3>
               <p className="text-center text-gray-500 mb-6">
-                Have students scan this QR code with their CampusOS Mobile App<br/>
+                Have students scan this QR code with their ResoSync Mobile App<br/>
                 to mark their attendance.
               </p>
               <Button variant="danger" onClick={async () => {

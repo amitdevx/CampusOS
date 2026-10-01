@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "CampusOS",
-    "slug": "campusos-mobile",
+    "name": "ResoSync",
+    "slug": "resosync",
     "version": "1.0.0",
-    "scheme": "campusos",
+    "scheme": "resosync",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,13 +19,13 @@
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
-      "package": "com.anonymous.campusosmobile"
+      "package": "com.resosync.app"
     },
     "plugins": [
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow CampusOS to access your camera to scan attendance QR codes."
+          "cameraPermission": "Allow ResoSync to access your camera to scan attendance QR codes."
         }
       ],
       "expo-notifications"

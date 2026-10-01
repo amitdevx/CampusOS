@@ -63,7 +63,7 @@ export default function LoginScreen({ navigation }: Props) {
             <View style={styles.logoContainer}>
               <GraduationCap size={48} color={colors.primary} />
             </View>
-            <Text style={styles.title}>CampusOS</Text>
+            <Text style={styles.title}>ResoSync</Text>
             <Text style={styles.subtitle}>Welcome back! Please sign in.</Text>
           </View>
 
