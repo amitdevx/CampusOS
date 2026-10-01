@@ -219,3 +219,8 @@ export const markNotificationRead = async (id: number) => {
   const response = await apiClient.put(`/api/v1/notifications/${id}/read`);
   return response.data;
 };
+
+export const getAttendanceRecords = async (session_id: number) => {
+  const response = await apiClient.get(`/api/v1/attendance/sessions/${session_id}/records`);
+  return response.data;
+};

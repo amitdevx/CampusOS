@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getMySchedule, startAttendanceSession } from '@campusos/api-client';
+import { getMySchedule, startAttendanceSession, getAttendanceRecords, getUsers } from '@campusos/api-client';
 import QRCode from 'react-qr-code';
+import { Users, CheckCircle } from 'lucide-react';
 
 interface ClassSession {
   id: number;
@@ -31,6 +32,7 @@ function isSessionActive(start_time: string, end_time: string) {
 
 export default function TeacherTimetablePage() {
   const [sessions, setSessions] = useState<ClassSession[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,26 +40,51 @@ export default function TeacherTimetablePage() {
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [qrSecret, setQrSecret] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [attendees, setAttendees] = useState<any[]>([]);
 
   useEffect(() => {
-    getMySchedule()
-      .then((data) => setSessions(data || []))
-      .catch(() => setError('Failed to load timetable.'))
+    Promise.all([getMySchedule(), getUsers()])
+      .then(([scheduleData, usersData]) => {
+        setSessions(scheduleData || []);
+        setAllUsers(usersData || []);
+      })
+      .catch(() => setError('Failed to load timetable or user data.'))
       .finally(() => setLoading(false));
   }, []);
 
+  // Poll for attendance records when modal is open
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (activeSessionId && qrSecret) {
+      const fetchAttendees = () => {
+        getAttendanceRecords(activeSessionId)
+          .then((records) => setAttendees(records || []))
+          .catch(console.error);
+      };
+      fetchAttendees(); // initial fetch
+      interval = setInterval(fetchAttendees, 3000); // Poll every 3 seconds
+    }
+    return () => clearInterval(interval);
+  }, [activeSessionId, qrSecret]);
+
   const handleStartAttendance = async (sessionId: number) => {
     setGenerating(true);
+    setAttendees([]);
     try {
       const data = await startAttendanceSession(sessionId);
       setQrSecret(data.qr_code_secret);
-      setActiveSessionId(sessionId);
+      setActiveSessionId(data.id); // Set the ATTENDANCE session ID, not class ID
     } catch (err: any) {
       console.error(err);
       alert(err.response?.data?.detail || 'Failed to start attendance session');
     } finally {
       setGenerating(false);
     }
+  };
+
+  const getStudentName = (id: number) => {
+    const user = allUsers.find(u => u.id === id);
+    return user ? user.full_name : `Student #${id}`;
   };
 
   if (loading) {
@@ -81,21 +108,66 @@ export default function TeacherTimetablePage() {
       
       {/* QR MODAL (Rendered at top level when active) */}
       {qrSecret && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#09090B]/90 backdrop-blur-sm">
-          <div className="bg-white p-12 rounded-3xl shadow-2xl flex flex-col items-center max-w-lg w-full border border-[#27272A]">
-            <h2 className="text-2xl font-bold tracking-tight text-[#09090B] mb-2">Live Session Access</h2>
-            <p className="text-sm font-medium text-[#71717A] mb-8 uppercase tracking-widest">Scan using CampusOS Mobile App</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#09090B]/90 backdrop-blur-sm p-4 md:p-12">
+          <div className="bg-white rounded-3xl shadow-2xl flex flex-col md:flex-row w-full max-w-5xl h-[85vh] overflow-hidden border border-[#27272A]">
             
-            <div className="p-6 bg-white border-4 border-[#09090B] rounded-2xl shadow-inner mb-10">
-              <QRCode value={qrSecret} size={280} level="H" />
+            {/* Left Side: QR Code Display */}
+            <div className="flex-1 flex flex-col items-center justify-center p-10 bg-[#FAFAFA] border-r border-[#E4E4E7]">
+              <h2 className="text-3xl font-bold tracking-tight text-[#09090B] mb-2">Live Access Portal</h2>
+              <p className="text-sm font-medium text-[#71717A] mb-12 uppercase tracking-widest">Scan using CampusOS Mobile</p>
+              
+              <div className="p-8 bg-white border-4 border-[#09090B] rounded-[2rem] shadow-xl mb-12">
+                <QRCode value={JSON.stringify({ type: "ATTENDANCE", sessionId: activeSessionId, secret: qrSecret })} size={320} level="H" />
+              </div>
+
+              <button 
+                onClick={() => { setQrSecret(null); setActiveSessionId(null); }}
+                className="w-64 py-4 bg-[#09090B] text-white rounded-xl font-bold uppercase tracking-widest hover:bg-[#27272A] transition-colors"
+              >
+                End Session
+              </button>
             </div>
 
-            <button 
-              onClick={() => setQrSecret(null)}
-              className="w-full py-4 bg-[#09090B] text-white rounded-xl font-bold uppercase tracking-widest hover:bg-[#27272A] transition-colors"
-            >
-              Close Presentation Mode
-            </button>
+            {/* Right Side: Live Attendees Feed */}
+            <div className="w-full md:w-96 flex flex-col bg-white h-full">
+              <div className="p-6 border-b border-[#E4E4E7] bg-[#FAFAFA] flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <Users size={20} className="text-[#09090B]" />
+                  <h3 className="font-bold text-[#09090B] uppercase tracking-widest text-sm">Live Feed</h3>
+                </div>
+                <div className="bg-[#10B981]/10 text-[#10B981] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border border-[#10B981]/20">
+                  <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+                  {attendees.length} Present
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {attendees.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-[#A1A1AA]">
+                    <div className="w-12 h-12 mb-4 rounded-full border-2 border-dashed border-[#D4D4D8] flex items-center justify-center animate-spin-slow" />
+                    <p className="text-xs font-bold uppercase tracking-widest">Awaiting Scans...</p>
+                  </div>
+                ) : (
+                  attendees.slice().reverse().map((record) => (
+                    <div key={record.id} className="flex items-center justify-between p-4 bg-[#FAFAFA] border border-[#E4E4E7] rounded-xl animate-in slide-in-from-right-4 fade-in">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#10B981]/10 flex items-center justify-center border border-[#10B981]/20">
+                          <CheckCircle size={16} className="text-[#10B981]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#09090B]">{getStudentName(record.student_id)}</p>
+                          <p className="text-xs text-[#71717A] font-mono mt-0.5">ID: {record.student_id}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-[#A1A1AA] font-mono">
+                        {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
       )}

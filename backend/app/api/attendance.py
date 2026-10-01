@@ -139,3 +139,9 @@ def scan_qr_attendance(session_id: int, record_in: AttendanceRecordCreate, db: S
     db.commit()
     db.refresh(record)
     return record
+
+@router.get("/sessions/{session_id}/records", response_model=List[AttendanceRecordResponse])
+def get_attendance_records(session_id: int, db: SessionDep, current_user=Depends(get_current_teacher_or_admin)):
+    # Returns all records for a session
+    records = db.query(AttendanceRecord).filter(AttendanceRecord.session_id == session_id).all()
+    return records

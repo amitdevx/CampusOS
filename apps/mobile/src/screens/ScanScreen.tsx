@@ -5,11 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Linking,
-  SafeAreaView,
   Dimensions,
 } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
-import { X, Zap, CheckCircle } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { X, CheckCircle, Loader2 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { markAttendance } from '@campusos/api-client';
 import { colors } from '../theme/colors';
@@ -25,6 +25,7 @@ interface SuccessData {
 }
 
 export default function ScanScreen() {
+  const navigation = useNavigation<any>();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
   const [scanState, setScanState] = useState<ScanState>('scanning');
@@ -32,9 +33,11 @@ export default function ScanScreen() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    Camera.requestCameraPermissionsAsync().then(({ status }) =>
-      setHasPermission(status === 'granted')
-    );
+    let mounted = true;
+    Camera.requestCameraPermissionsAsync().then(({ status }) => {
+      if (mounted) setHasPermission(status === 'granted');
+    });
+    return () => { mounted = false; };
   }, []);
 
   const resetScan = () => {
@@ -50,16 +53,20 @@ export default function ScanScreen() {
     setScanState('processing');
 
     try {
+      // The QR code contains JSON stringified data from the teacher dashboard
       const parsedData = JSON.parse(data);
       const sessionId = parsedData.session || parsedData.sessionId;
       const secret = parsedData.token || parsedData.secret;
 
       if (parsedData.type === 'ATTENDANCE' && sessionId && secret) {
         await markAttendance(sessionId, secret);
-        setSuccessData({ sessionId, markedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+        setSuccessData({ 
+          sessionId, 
+          markedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+        });
         setScanState('success');
       } else {
-        throw new Error('Invalid QR format');
+        throw new Error('Invalid QR format. Not a CampusOS attendance code.');
       }
     } catch (error: any) {
       const msg = error?.response?.data?.detail || 'QR code is invalid or expired.';
@@ -92,45 +99,9 @@ export default function ScanScreen() {
     );
   }
 
-  if (scanState === 'success' && successData) {
-    return (
-      <Screen style={styles.successContainer}>
-        <View style={styles.successCard}>
-          <View style={styles.successIconWrap}>
-            <CheckCircle size={56} color={colors.success} strokeWidth={1.5} />
-          </View>
-          <Text style={styles.successTitle}>Attendance Marked</Text>
-          <Text style={styles.successSubtitle}>
-            Session #{successData.sessionId}
-          </Text>
-          <Text style={styles.successTime}>Marked at {successData.markedAt}</Text>
-          <TouchableOpacity style={styles.doneButton} onPress={resetScan}>
-            <Text style={styles.doneButtonText}>Done</Text>
-          </TouchableOpacity>
-        </View>
-      </Screen>
-    );
-  }
-
-  if (scanState === 'error') {
-    return (
-      <Screen style={styles.successContainer}>
-        <View style={styles.errorCard}>
-          <View style={styles.errorIconWrap}>
-            <X size={48} color={colors.danger} strokeWidth={1.5} />
-          </View>
-          <Text style={styles.errorTitle}>Scan Failed</Text>
-          <Text style={styles.errorMsg}>{errorMsg}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={resetScan}>
-            <Text style={styles.retryButtonText}>Scan Again</Text>
-          </TouchableOpacity>
-        </View>
-      </Screen>
-    );
-  }
-
   return (
     <View style={styles.container}>
+      {/* We keep CameraView mounted at all times to prevent Android crash bugs when unmounting rapidly */}
       <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
@@ -155,64 +126,101 @@ export default function ScanScreen() {
       </View>
 
       {/* Top bar */}
-      <Screen style={styles.topBar}>
+      <Screen style={[styles.topBar, { backgroundColor: 'transparent' }]}>
         <Text style={styles.title}>Scan Attendance</Text>
       </Screen>
 
       {/* Bottom instructions */}
-      <View style={styles.bottomBar}>
-        <Text style={styles.instruction}>
-          {scanState === 'processing' ? 'Processing...' : 'Align the QR code inside the frame'}
-        </Text>
-      </View>
+      {scanState === 'scanning' && (
+        <View style={styles.bottomBar}>
+          <Text style={styles.instruction}>Align the QR code inside the frame</Text>
+        </View>
+      )}
+
+      {scanState === 'processing' && (
+        <View style={styles.overlayFull}>
+          <View style={styles.processingCard}>
+            <Text style={styles.processingText}>Verifying Access...</Text>
+          </View>
+        </View>
+      )}
+
+      {scanState === 'success' && successData && (
+        <View style={styles.overlayFull}>
+          <View style={styles.successCard}>
+            <View style={styles.successIconWrap}>
+              <CheckCircle size={56} color={colors.success} strokeWidth={1.5} />
+            </View>
+            <Text style={styles.successTitle}>Attendance Marked</Text>
+            <Text style={styles.successSubtitle}>Session #{successData.sessionId}</Text>
+            <Text style={styles.successTime}>Marked at {successData.markedAt}</Text>
+            <TouchableOpacity style={styles.doneButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.doneButtonText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {scanState === 'error' && (
+        <View style={styles.overlayFull}>
+          <View style={styles.errorCard}>
+            <View style={styles.errorIconWrap}>
+              <X size={48} color={colors.danger} strokeWidth={1.5} />
+            </View>
+            <Text style={styles.errorTitle}>Scan Failed</Text>
+            <Text style={styles.errorMsg}>{errorMsg}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={resetScan}>
+              <Text style={styles.retryButtonText}>Scan Again</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
 
-const OVERLAY_COLOR = 'rgba(0,0,0,0.72)';
+const OVERLAY_COLOR = 'rgba(9, 9, 11, 0.85)';
 const CORNER_SIZE = 24;
 const CORNER_WIDTH = 3;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+  container: { flex: 1, backgroundColor: '#09090B' },
   permissionContainer: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#09090B',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   permissionCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#FAFAFA',
     borderRadius: 24,
     padding: 32,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
     maxWidth: 340,
   },
   permissionTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: colors.text,
+    color: '#09090B',
     marginBottom: 12,
     textAlign: 'center',
   },
   permissionDesc: {
     fontSize: 15,
-    color: colors.textSecondary,
+    color: '#71717A',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 28,
   },
   permissionButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#09090B',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 14,
   },
   permissionButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  permissionText: { color: colors.textSecondary, fontSize: 16 },
+  permissionText: { color: '#71717A', fontSize: 16 },
 
   // Overlay
   overlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, flexDirection: 'column' },
@@ -224,6 +232,14 @@ const styles = StyleSheet.create({
     width: QR_SIZE,
     height: QR_SIZE,
     backgroundColor: 'transparent',
+  },
+  overlayFull: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(9, 9, 11, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    zIndex: 10,
   },
 
   // Corners
@@ -262,32 +278,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   instruction: {
-    color: 'rgba(255,255,255,0.85)',
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '800',
     textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: '#09090B',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 24,
     overflow: 'hidden',
   },
 
-  // Success
-  successContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
+  // Processing
+  processingCard: {
+    backgroundColor: '#FFFFFF',
     padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
   },
+  processingText: {
+    color: '#09090B',
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 12,
+  },
+
+  // Success
   successCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#FAFAFA',
     borderRadius: 28,
     padding: 40,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D1FAE5',
     width: '100%',
     maxWidth: 340,
   },
@@ -303,24 +324,24 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: colors.text,
+    color: '#09090B',
     marginBottom: 8,
     textAlign: 'center',
   },
   successSubtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
+    color: '#52525B',
     fontWeight: '500',
     marginBottom: 4,
     textAlign: 'center',
   },
   successTime: {
     fontSize: 14,
-    color: colors.textMuted,
+    color: '#A1A1AA',
     marginBottom: 32,
   },
   doneButton: {
-    backgroundColor: colors.success,
+    backgroundColor: '#09090B',
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 14,
@@ -331,12 +352,10 @@ const styles = StyleSheet.create({
 
   // Error
   errorCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#FAFAFA',
     borderRadius: 28,
     padding: 40,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FECACA',
     width: '100%',
     maxWidth: 340,
   },
@@ -358,13 +377,13 @@ const styles = StyleSheet.create({
   },
   errorMsg: {
     fontSize: 15,
-    color: colors.textSecondary,
+    color: '#71717A',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 32,
   },
   retryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#09090B',
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 14,
