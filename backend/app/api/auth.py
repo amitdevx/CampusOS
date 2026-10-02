@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import Any
 
-from .deps import SessionDep, CurrentUser
+from .deps import SessionDep, CurrentUser, get_current_active_admin
 from ..core.security import verify_password, get_password_hash, create_access_token
 from ..models.user import User
 from ..schemas.user import UserCreate, UserResponse, Token
@@ -31,10 +31,10 @@ def login_access_token(
 
 @router.post("/register", response_model=UserResponse)
 def register_user(
-    *, db: SessionDep, user_in: UserCreate
+    *, db: SessionDep, user_in: UserCreate, current_admin: User = Depends(get_current_active_admin)
 ) -> Any:
     """
-    Register a new user.
+    Register a new user (Admin only).
     """
     user = db.query(User).filter(User.email == user_in.email).first()
     if user:
@@ -43,6 +43,9 @@ def register_user(
             detail="The user with this username already exists in the system.",
         )
     
+    if user_in.role in ["SUPER_ADMIN", "ADMIN"] and current_admin.role != "SUPER_ADMIN":
+        raise HTTPException(status_code=403, detail="Not authorized to create admin accounts")
+
     user = User(
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),

@@ -100,7 +100,6 @@ export default function AdminUsersPage() {
                 <option value="STUDENT">STUDENT</option>
                 <option value="TEACHER">TEACHER</option>
                 <option value="FACULTY">FACULTY</option>
-                <option value="ADMIN">ADMIN</option>
               </select>
             </div>
 

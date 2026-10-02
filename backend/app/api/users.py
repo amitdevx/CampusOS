@@ -19,8 +19,10 @@ def read_users(
     """
     Retrieve users (Admin only).
     """
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    query = db.query(User)
+    if current_admin.role != "SUPER_ADMIN":
+        query = query.filter(User.role.in_(["STUDENT", "TEACHER", "FACULTY"]))
+    return query.offset(skip).limit(limit).all()
 
 @router.delete("/{user_id}", response_model=UserResponse)
 def delete_user(
@@ -38,6 +40,9 @@ def delete_user(
     if user.id == current_admin.id:
         raise HTTPException(status_code=400, detail="Admins cannot delete themselves")
     
+    if current_admin.role != "SUPER_ADMIN" and user.role in ["ADMIN", "SUPER_ADMIN"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete admin users")
+
     db.delete(user)
     db.commit()
     return user
