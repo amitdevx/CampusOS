@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { getMe, getMySchedule } from '@campusos/api-client';
 import { Bell, MapPin, QrCode } from 'lucide-react-native';
@@ -20,6 +21,7 @@ export default function HomeScreen({ navigation }: any) {
   const [user, setUser] = useState<any>(null);
   const [schedule, setSchedule] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showNotifs, setShowNotifs] = useState(false);
   const { notifications } = useCampusWebSocket();
 
   useEffect(() => {
