@@ -55,7 +55,7 @@ export default function ClassesScreen() {
               </View>
               <View style={styles.sessionCard}>
                 <Text style={styles.sessionSubject}>
-                  {item.subject_name || `Subject #${item.subject_id}`}
+                  {item.subject_name || "Unknown Subject"}
                   {item.subject_code ? ` (${item.subject_code})` : ''}
                 </Text>
                 <View style={styles.sessionDetailsRow}>

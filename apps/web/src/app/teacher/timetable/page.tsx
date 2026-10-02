@@ -131,7 +131,7 @@ export default function TeacherTimetablePage() {
     <div className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 md:items-center hover:bg-[#FAFAFA] transition-colors ${type === 'COMPLETED' ? 'opacity-60' : ''}`}>
       <div className="col-span-1 md:col-span-3">
         <p className="text-sm font-bold text-[#09090B]">
-          {c.subject_name || `Subject #${c.subject_id}`}
+          {c.subject_name || "Unknown Subject"}
           {c.subject_code && <span className="ml-1 text-[10px] text-[#71717A] font-mono">({c.subject_code})</span>}
         </p>
         <span className="inline-block mt-1 px-2 py-0.5 bg-[#F4F4F5] text-[#09090B] font-mono text-[10px] uppercase rounded border border-[#E4E4E7]">

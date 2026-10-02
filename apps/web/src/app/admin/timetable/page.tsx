@@ -160,11 +160,11 @@ export default function TimetablePage() {
     <div className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-[#FAFAFA] transition-colors">
       <div className="col-span-4">
         <p className="text-sm font-bold text-[#09090B]">
-          {c.subject_name || `Subject #${c.subject_id}`}
+          {c.subject_name || "Unknown Subject"}
           {c.subject_code && <span className="ml-2 text-[10px] text-[#71717A] font-mono">({c.subject_code})</span>}
         </p>
         <p className="text-xs text-[#71717A] mt-0.5 font-medium">
-          {c.teacher_name || `Instructor #${c.teacher_id}`}
+          {c.teacher_name || "Unknown Instructor"}
         </p>
       </div>
       <div className="col-span-2">
