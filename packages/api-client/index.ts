@@ -244,3 +244,19 @@ export const getMyEventRegistrations = async () => {
   const response = await apiClient.get('/api/v1/campus/events/my-registrations');
   return response.data;
 };
+
+// Super Admin exclusive functions
+export const deleteUser = async (userId: number) => {
+  const response = await apiClient.delete(`/api/v1/users/${userId}`);
+  return response.data;
+};
+
+export const createDepartment = async (data: { name: string; code: string }) => {
+  const response = await apiClient.post('/api/v1/academic/departments', data);
+  return response.data;
+};
+
+export const updateUserRole = async (userId: number, role: string) => {
+  const response = await apiClient.put(`/api/v1/users/${userId}/role`, { role });
+  return response.data;
+};

@@ -1,61 +1,141 @@
-# CampusOS / ResoSync: Complete End-to-End Acceptance Testing Guide
+# CampusOS / ResoSync — Complete Testing Guide
 
-This guide ensures full validation of every major user workflow, focusing on cross-platform parity, real-time functionality, and database persistence.
-
----
-
-## 👥 Test Accounts (Password for all: `campusos2026`)
-- **Super Admin**: `superadmin@campusos.com`\n- **Admin**: `admin@campusos.com` (Has full access to `/super-admin`)
-- **Teacher**: `teacher@campusos.com`
-- **Faculty**: `faculty@campusos.com`
-- **Student**: `student@campusos.com`
+> **Last updated:** October 2, 2026
 
 ---
 
-## 🧪 Critical Workflows
+## 🧑‍💻 Test Accounts (Password for all: `campusos2026`)
 
-### 1. WebSockets & Persistent Notifications (End-to-End)
-**Scenario**: Faculty publishes a notice, and a Student receives a persistent notification live.
-1. **Receiver (Device A)**: Open the Mobile App or Web App and log in as `student@campusos.com`. 
-   - Note that the Notification bell (web) or icon (mobile) currently says "No active alerts."
-2. **Sender (Device B)**: Log in as `faculty@campusos.com` on the Web Dashboard.
-3. **Action**: Navigate to Notices -> Post New Notice. Submit a notice (e.g., "Live System Update").
-4. **Verification**: 
-   - **Real-Time Delivery**: Without refreshing, Device A's bell icon will instantly update with a red badge, and the dropdown/modal will show the new "System Alert".
-   - **Persistence**: Disconnect/refresh Device A. The notification remains unread and stored securely in the database.
+| Role         | Email                       | Dashboard Route  | Scope                                                |
+|--------------|-----------------------------|------------------|------------------------------------------------------|
+| Super Admin  | `superadmin@campusos.com`   | `/super-admin`   | Everything — all users (incl. other admins), all data |
+| Admin        | `admin@campusos.com`        | `/admin`         | Faculty, Teachers, Students, Timetables, Resources   |
+| Faculty      | `faculty@campusos.com`      | `/faculty`       | Notices, Department, Subjects, Practical labs        |
+| Teacher      | `teacher@campusos.com`      | `/teacher`       | QR attendance, Timetable, Assignments, Marks         |
+| Student      | `student@campusos.com`      | `/student`       | Schedule, Attendance, Events, Profile, Resources     |
 
-### 2. Daily Demostration Timetable
-**Scenario**: The database is seeded with a dense, 6-period daily schedule spanning 10:00 AM to 5:00 PM.
-1. Log in as `student@campusos.com` on the Mobile App.
-2. Navigate to **Classes**.
-3. **Verification**: You will see today's exact schedule fully populated with classes spanning back-to-back:
-   - 10:00 - 11:30 | 12:00 - 1:30 | 1:30 - 2:20 | 2:30 - 3:30 | 3:30 - 4:30 | 4:30 - 5:00.
-
-### 3. Teacher QR Code Generation & Class Filtering
-**Scenario**: Teachers must only see *today's* classes for attendance, preventing clutter and mistakes.
-1. Log in as `teacher@campusos.com` on the **Web** or **Mobile**.
-2. Navigate to **Attendance QR**.
-3. **Verification**:
-   - The primary active dropdown *only* contains classes scheduled for **Today**. Future dates and past dates are strictly removed.
-   - The strict "Time Window Restriction" has been bypassed for demo purposes, allowing you to generate a valid QR Code for any of today's classes at any time during a live presentation.
-
-### 4. Student Digital ID & Profile Route
-**Scenario**: Student accesses their digital profile card.
-1. Log in as `student@campusos.com` on the Web.
-2. Click **View Full Profile** or **Display QR Pass** on the dashboard.
-3. **Verification**: You are correctly routed to `/student/profile`, which displays an authenticated Digital ID QR pass and the student's personal information pulled securely from the DB.
-
-### 5. Mobile Campus Resource Booking
-**Scenario**: Booking a campus resource from the mobile app.
-1. Open the Mobile App as `faculty@campusos.com`.
-2. Navigate to the **Resources** tab.
-3. **Verification**: Resources (like the "Computer Science Lab 1") now show as "Book Now" instead of "Unavailable", accurately reflecting their dynamic availability.
-
-### 6. Super Admin Route Protection
-**Scenario**: Testing the top-level institutional dashboard.
-1. Log in as `admin@campusos.com` (role has been promoted to SUPER_ADMIN).
-2. Navigate directly to `/super-admin`.
-3. **Verification**: The 404 is gone. You are greeted by the institutional dashboard, pulling live aggregate statistics for Total Users, Scheduled Sessions, and Events.
+> ⚠️ **Role Separation:** `SUPER_ADMIN ≠ ADMIN`. Super Admin is the only account that can manage other Admins and access `/super-admin`. Regular Admins use `/admin` and cannot access Super Admin routes.
 
 ---
-**Status**: All End-to-End checks are confirmed working as of October 2026.
+
+## 🗓️ Daily Demo Timetable (Oct 2 – Nov 1, 2026)
+
+Every weekday has 6 back-to-back class sessions seeded in the database (IST times):
+
+| Slot | Start   | End     | Duration | Subjects                         |
+|------|---------|---------|----------|----------------------------------|
+| 1    | 3:30 PM | 5:00 PM | 90 min   | Theory (random)                  |
+| 2    | 5:30 PM | 7:00 PM | 90 min   | Theory (random)                  |
+| 3    | 7:00 PM | 7:50 PM | 50 min   | Theory (random)                  |
+| 4    | 8:00 PM | 9:00 PM | 60 min   | Theory (random)                  |
+| 5    | 9:00 PM | 10:00 PM| 60 min   | Practical (Lab)                  |
+| 6    | 10:00 PM| 10:30 PM| 30 min   | Practical (Lab)                  |
+
+> **Note:** Times above are in UTC. Local IST display = UTC + 5:30.
+
+---
+
+## 🧪 Critical Workflow Tests
+
+### Test 1 — Super Admin Portal
+
+1. Login at `https://campus-os-chi-eight.vercel.app/login` as `superadmin@campusos.com`
+2. You are routed to `/super-admin`
+3. **Verify these pages are fully functional (no 404):**
+   - `/super-admin` — Dashboard with live institution stats
+   - `/super-admin/users` — Full user CRUD for ALL roles including other admins
+   - `/super-admin/departments` — Create and list departments
+   - `/super-admin/subjects` — View all subjects by course/department
+   - `/super-admin/events` — Past and upcoming campus events
+   - `/super-admin/timetable` — Institution-wide timetable overview
+   - `/super-admin/audit` — Recent system activity log
+4. **Access control:** Try visiting `/super-admin` while logged in as `admin@campusos.com`. You should be redirected to `/login`.
+
+---
+
+### Test 2 — Admin Portal (Separate from Super Admin)
+
+1. Login as `admin@campusos.com` → routed to `/admin`
+2. Admin can manage: Users (not other admins), Timetables, Resources, Events, QR generation
+3. Admin **cannot** access `/super-admin` — redirects to `/login`
+
+---
+
+### Test 3 — QR Attendance (Always-On Demo)
+
+1. Login as `teacher@campusos.com` on the **Web** → `/teacher/qr`
+2. Dropdown shows **only today's classes** (no future/past dates)
+3. Select any class → Click **Generate QR Code**
+4. ✅ No "time window" error — works at any time of day for demos
+5. Login as `student@campusos.com` on the **Mobile App**
+6. Tap the QR Scanner icon → Scan the teacher's QR code
+7. ✅ Attendance is persisted to the database and shows in teacher's records
+
+---
+
+### Test 4 — Live Notifications (End-to-End)
+
+**Setup:** Two devices/windows
+- **Device A:** Login as `student@campusos.com` (web or mobile) — note the Bell icon with no badge
+- **Device B:** Login as `faculty@campusos.com` on web → Faculty → Notices
+
+**Steps:**
+1. On Device B, click **Post New Notice**, enter a unique title and content → Publish
+2. **Database check:** Notice is saved. Notification records are created for all users.
+3. **Real-time (Device A):** The Bell icon updates live via WebSocket — a red badge appears
+4. Click the Bell: your notification is listed with title and timestamp
+5. **Persistence test:** Refresh Device A → notification still shows (fetched from DB, not just in-memory)
+
+---
+
+### Test 5 — Student Profile & Digital ID
+
+1. Login as `student@campusos.com` → `/student`
+2. Click **"Display QR Pass"** or **"View Full Profile"**
+3. ✅ Routes to `/student/profile`
+4. Page shows: Full Name, Email, Role, and a scannable **Digital ID QR Code**
+5. QR payload: `{ "type": "ID_CARD", "user_id": ..., "email": "..." }`
+
+---
+
+### Test 6 — Mobile Campus Resources (Fixed)
+
+1. Open Mobile App → login as `faculty@campusos.com`
+2. Tap the **Resources** tab
+3. ✅ Resources show as **"Book Now"** (not "Unavailable")
+4. Tap Book Now on a resource → booking confirmed and persisted
+
+---
+
+### Test 7 — Mobile Notification Bell (Fixed)
+
+1. Open Mobile App → login as `student@campusos.com`
+2. Tap the **Bell icon** at the top right of Home Screen
+3. ✅ A modal opens showing "System Alerts"
+4. After a notice is published (Test 4), the list populates without manual refresh
+
+---
+
+## 🔐 Role Permission Matrix
+
+| Action                      | SUPER_ADMIN | ADMIN | FACULTY | TEACHER | STUDENT |
+|-----------------------------|:-----------:|:-----:|:-------:|:-------:|:-------:|
+| Manage all users            | ✅          | ❌    | ❌      | ❌      | ❌      |
+| Manage admins               | ✅          | ❌    | ❌      | ❌      | ❌      |
+| Manage departments/subjects | ✅          | ✅    | ❌      | ❌      | ❌      |
+| Access `/super-admin`       | ✅          | ❌    | ❌      | ❌      | ❌      |
+| Manage resources/events     | ✅          | ✅    | ✅      | ❌      | ❌      |
+| Publish notices             | ✅          | ✅    | ✅      | ❌      | ❌      |
+| Generate QR attendance      | ✅          | ✅    | ✅      | ✅      | ❌      |
+| View own timetable          | ✅          | ✅    | ✅      | ✅      | ✅      |
+| Scan QR attendance          | ❌          | ❌    | ❌      | ❌      | ✅      |
+| Book resources              | ✅          | ✅    | ✅      | ✅      | ❌      |
+| Submit assignments          | ❌          | ❌    | ❌      | ❌      | ✅      |
+
+---
+
+## 🌐 Live Environment
+
+- **Web:** https://campus-os-chi-eight.vercel.app
+- **API:** https://campusos-api-3r6a.onrender.com
+- **API Docs:** https://campusos-api-3r6a.onrender.com/docs
