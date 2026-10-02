@@ -86,7 +86,7 @@ export default function ScanScreen() {
 
   if (hasPermission === false) {
     return (
-      <Screen style={styles.permissionContainer}>
+      <View style={styles.permissionContainer}>
         <View style={styles.permissionCard}>
           <Text style={styles.permissionTitle}>Camera Access Required</Text>
           <Text style={styles.permissionDesc}>
@@ -96,7 +96,7 @@ export default function ScanScreen() {
             <Text style={styles.permissionButtonText}>Open Settings</Text>
           </TouchableOpacity>
         </View>
-      </Screen>
+      </View>
     );
   }
 
