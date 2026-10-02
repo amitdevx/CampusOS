@@ -7,7 +7,7 @@ from .deps import SessionDep, get_current_faculty_or_admin, CurrentUser
 from ..models.timetable import ClassSession
 from ..models.academic import Enrollment, Division, Subject
 from ..models.user import User
-from ..schemas.academic import ClassSessionCreate, ClassSessionResponse, ConflictDetail
+from ..schemas.academic import ClassSessionCreate, ClassSessionResponse
 from ..core.notify import send_notification
 
 router = APIRouter()
@@ -91,17 +91,19 @@ async def create_class_session(
         else:
             reason = "Division already has a class at this time"
 
-        conflict = ConflictDetail(
-            subject=overlapping.subject_ref.name if overlapping.subject_ref else None,
-            teacher=overlapping.teacher.full_name if overlapping.teacher else None,
-            division=overlapping.division.name if overlapping.division else None,
-            room=overlapping.room,
-            start=overlapping.start_time,
-            end=overlapping.end_time,
-        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail={"message": reason, "conflict": conflict.model_dump()},
+            detail={
+                "message": reason,
+                "conflict": {
+                    "subject": overlapping.subject_ref.name if overlapping.subject_ref else None,
+                    "teacher": overlapping.teacher.full_name if overlapping.teacher else None,
+                    "division": overlapping.division.name if overlapping.division else None,
+                    "room": overlapping.room,
+                    "start": overlapping.start_time.isoformat() if overlapping.start_time else None,
+                    "end": overlapping.end_time.isoformat() if overlapping.end_time else None,
+                },
+            },
         )
 
     db_session = ClassSession(**session.model_dump())
