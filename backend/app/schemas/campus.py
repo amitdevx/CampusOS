@@ -33,9 +33,6 @@ class EventRegistrationResponse(BaseModel):
 class ResourceBase(BaseModel):
     name: str
     type: str = "GENERAL"
-    description: Optional[str] = None
-    capacity: Optional[int] = None
-    location: Optional[str] = None
 
 class ResourceCreate(ResourceBase):
     pass

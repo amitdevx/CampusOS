@@ -53,9 +53,12 @@ async def create_class_session(
     Faculty may only schedule classes for their department (enforced at API level).
     Returns a structured 409 with conflicting class details when a conflict is detected.
     """
-    now = datetime.utcnow()
-
     # Validate times
+    now = datetime.utcnow()
+    if session.start_time.tzinfo is not None:
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
+        
     if session.end_time <= session.start_time:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
