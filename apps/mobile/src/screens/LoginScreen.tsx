@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,10 @@ import { Screen } from '../components/Screen';
 import { colors } from '../theme/colors';
 
 const ROLES = [
-  { id: 'STUDENT', label: 'Student', email: 'student@gmail.com' },
+  { id: 'STUDENT', label: 'Student', email: 'student@campusos.com' },
   { id: 'TEACHER', label: 'Teacher', email: 'teacher@campusos.com' },
   { id: 'FACULTY', label: 'Faculty', email: 'faculty@campusos.com' },
-  { id: 'ADMIN', label: 'Admin', email: 'superadmin@campusos.com' },
+  { id: 'ADMIN', label: 'Admin', email: 'admin@campusos.com' },
 ];
 
 interface Props {
@@ -30,14 +30,27 @@ export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [wakingServer, setWakingServer] = useState(false);
   const [error, setError] = useState('');
 
   const handleTabChange = (role: typeof ROLES[0]) => {
     setActiveTab(role);
-    setEmail(''); // Clear for user to see placeholder
+    setEmail(''); 
     setPassword('');
     setError('');
   };
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    if (loading) {
+      timer = setTimeout(() => {
+        setWakingServer(true);
+      }, 3000);
+    } else {
+      setWakingServer(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const handleLogin = async () => {
     const targetEmail = email.trim() || activeTab.email;
@@ -47,6 +60,7 @@ export default function LoginScreen({ navigation }: Props) {
     }
 
     setLoading(true);
+    setWakingServer(false);
     setError('');
 
     try {
@@ -59,11 +73,18 @@ export default function LoginScreen({ navigation }: Props) {
 
       navigation.replace('Main', { role: user.role });
     } catch (err: any) {
-      const message =
-        err?.response?.data?.detail || 'Invalid email or password.';
-      setError(message);
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Server timeout. Waking up the cloud environment took too long. Please retry.');
+      } else if (!err.response) {
+        setError('Network error. The server is unreachable or offline.');
+      } else if (err.response?.status === 401) {
+        setError('Incorrect email or password.');
+      } else {
+        setError(err.response?.data?.detail || 'An unexpected error occurred during login.');
+      }
     } finally {
       setLoading(false);
+      setWakingServer(false);
     }
   };
 
@@ -132,17 +153,26 @@ export default function LoginScreen({ navigation }: Props) {
             />
 
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[styles.button, (loading || wakingServer) && styles.buttonDisabled]}
               onPress={handleLogin}
               disabled={loading}
               activeOpacity={0.8}
             >
               {loading ? (
-                <ActivityIndicator color={colors.surface} />
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <ActivityIndicator color={colors.surface} size="small" style={{marginRight: 8}} />
+                  <Text style={styles.buttonText}>{wakingServer ? 'WAKING UP SERVER...' : 'AUTHENTICATING...'}</Text>
+                </View>
               ) : (
                 <Text style={styles.buttonText}>AUTHENTICATE</Text>
               )}
             </TouchableOpacity>
+            
+            {wakingServer && (
+              <Text style={styles.wakingText}>
+                Cloud instance is booting from sleep. This may take up to 30 seconds.
+              </Text>
+            )}
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -272,7 +302,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.8,
-    backgroundColor: colors.primaryLight,
   },
   buttonText: {
     color: colors.surface,
@@ -294,4 +323,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  wakingText: {
+    marginTop: 16,
+    fontSize: 11,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  }
 });

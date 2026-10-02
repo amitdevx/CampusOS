@@ -4,6 +4,7 @@ from typing import List
 
 from .deps import SessionDep, CurrentUser
 from ..models.evaluations import Assignment, Submission, Exam, ExamMark
+from ..models.academic import Enrollment
 from ..schemas.evaluations import (
     AssignmentCreate, AssignmentResponse,
     SubmissionCreate, SubmissionResponse,
@@ -50,15 +51,28 @@ def create_exam(exam: ExamCreate, db: SessionDep, current_user: CurrentUser):
 
 @router.get("/assignments", response_model=List[AssignmentResponse])
 def get_assignments(db: SessionDep, current_user: CurrentUser):
-    if current_user.role in ["FACULTY", "ADMIN", "TEACHER"]:
-        return db.query(Assignment).all() # Or filter by teacher ID
+    if current_user.role in ["FACULTY", "ADMIN", "SUPER_ADMIN"]:
+        return db.query(Assignment).all()
+    elif current_user.role == "TEACHER":
+        return db.query(Assignment).filter(Assignment.teacher_id == current_user.id).all()
     else:
-        # Students should only see assignments for their subjects
-        return db.query(Assignment).all() # Simplified for now
+        # STUDENT: Only get assignments for divisions they are enrolled in, or division_id is NULL
+        enrollments = db.query(Enrollment).filter(Enrollment.student_id == current_user.id, Enrollment.status == "ACTIVE").all()
+        division_ids = [e.division_id for e in enrollments]
+        return db.query(Assignment).filter(
+            (Assignment.division_id.in_(division_ids)) | (Assignment.division_id == None)
+        ).all()
 
 @router.get("/exams", response_model=List[ExamResponse])
 def get_exams(db: SessionDep, current_user: CurrentUser):
-    return db.query(Exam).all()
+    if current_user.role in ["FACULTY", "ADMIN", "SUPER_ADMIN", "TEACHER"]:
+        return db.query(Exam).all()
+    else:
+        enrollments = db.query(Enrollment).filter(Enrollment.student_id == current_user.id, Enrollment.status == "ACTIVE").all()
+        division_ids = [e.division_id for e in enrollments]
+        return db.query(Exam).filter(
+            (Exam.division_id.in_(division_ids)) | (Exam.division_id == None)
+        ).all()
 
 class GradeSubmissionReq(BaseModel):
     marks: int
@@ -90,7 +104,6 @@ def post_exam_marks(exam_id: int, marks: List[ExamMarkCreate], db: SessionDep, c
         
     db_marks = []
     for mark in marks:
-        # Check if exists
         existing = db.query(ExamMark).filter(ExamMark.exam_id == exam_id, ExamMark.student_id == mark.student_id).first()
         if existing:
             existing.marks_obtained = mark.marks_obtained

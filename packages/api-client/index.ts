@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://campusos-api-3r6a.onrender.com',
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -222,5 +222,15 @@ export const markNotificationRead = async (id: number) => {
 
 export const getAttendanceRecords = async (session_id: number) => {
   const response = await apiClient.get(`/api/v1/attendance/sessions/${session_id}/records`);
+  return response.data;
+};
+
+export const registerForEvent = async (eventId: number) => {
+  const response = await apiClient.post(`/api/v1/campus/events/register`, { event_id: eventId });
+  return response.data;
+};
+
+export const getMyEventRegistrations = async () => {
+  const response = await apiClient.get('/api/v1/campus/events/my-registrations');
   return response.data;
 };

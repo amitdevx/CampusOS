@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAssignments, createAssignment, getSubjects, getBatches } from '@campusos/api-client';
+import { getAssignments, createAssignment, getSubjects, getDivisions } from '@campusos/api-client';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
 
 export default function TeacherAssignmentsPage() {
@@ -13,15 +13,15 @@ export default function TeacherAssignmentsPage() {
   const [desc, setDesc] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [subjectId, setSubjectId] = useState('');
-  const [batchId, setBatchId] = useState('');
+  const [divisionId, setDivisionId] = useState('');
 
   const [subjects, setSubjects] = useState<any[]>([]);
-  const [batches, setBatches] = useState<any[]>([]);
+  const [divisions, setDivisions] = useState<any[]>([]);
 
   useEffect(() => {
     load();
     getSubjects().then(setSubjects).catch(console.error);
-    getBatches().then(setBatches).catch(console.error);
+    getDivisions().then(setDivisions).catch(console.error);
   }, []);
 
   async function load() {
@@ -44,12 +44,13 @@ export default function TeacherAssignmentsPage() {
         description: desc,
         deadline: new Date(dueDate).toISOString(),
         subject_id: parseInt(subjectId),
+        division_id: divisionId ? parseInt(divisionId) : null,
       });
       setTitle('');
       setDesc('');
       setDueDate('');
       setSubjectId('');
-      setBatchId('');
+      setDivisionId('');
       load();
     } catch (e) {
       console.error(e);
@@ -93,11 +94,11 @@ export default function TeacherAssignmentsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Batch</label>
-                  <select required value={batchId} onChange={e => setBatchId(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md text-gray-900 bg-white">
-                    <option value="">Select...</option>
-                    {batches.map(b => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
+                  <label className="block text-sm font-medium text-gray-700">Division (Optional)</label>
+                  <select value={divisionId} onChange={e => setDivisionId(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md text-gray-900 bg-white">
+                    <option value="">All Divisions</option>
+                    {divisions.map(d => (
+                      <option key={d.id} value={d.id}>{d.name} (Batch {d.batch_id})</option>
                     ))}
                   </select>
                 </div>
@@ -121,8 +122,8 @@ export default function TeacherAssignmentsPage() {
                       <p className="text-sm text-gray-600 mt-1">{a.description}</p>
                       <div className="flex gap-4 mt-3 text-xs text-gray-500">
                         <span>Subject: {subjects.find(s => s.id === a.subject_id)?.name || a.subject_id}</span>
-                        <span>Batch: {batches.find(b => b.id === a.batch_id)?.name || a.batch_id}</span>
-                        <span>Due: {new Date(a.due_date).toLocaleDateString()}</span>
+                        <span>Division: {a.division_id ? (divisions.find(d => d.id === a.division_id)?.name || a.division_id) : 'All Divisions'}</span>
+                        <span>Due: {new Date(a.deadline).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>

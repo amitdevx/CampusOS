@@ -5,6 +5,7 @@ from datetime import datetime
 # Assignment
 class AssignmentBase(BaseModel):
     subject_id: int
+    division_id: Optional[int] = None
     title: str
     description: Optional[str] = None
     deadline: datetime
@@ -39,6 +40,7 @@ class SubmissionResponse(SubmissionBase):
 # Exam
 class ExamBase(BaseModel):
     subject_id: int
+    division_id: Optional[int] = None
     title: str
     exam_date: datetime
     total_marks: int

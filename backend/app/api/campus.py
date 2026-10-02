@@ -29,8 +29,16 @@ def create_event(event: EventCreate, db: SessionDep, current_user: CurrentUser):
 def get_events(db: SessionDep, current_user: CurrentUser):
     return db.query(Event).order_by(Event.event_date.asc()).all()
 
+
+@router.get("/events/my-registrations", response_model=List[EventRegistrationResponse])
+def get_my_event_registrations(db: SessionDep, current_user: CurrentUser):
+    return db.query(EventRegistration).filter(EventRegistration.student_id == current_user.id).all()
+
 @router.post("/events/register", response_model=EventRegistrationResponse)
 def register_event(reg: EventRegistrationCreate, db: SessionDep, current_user: CurrentUser):
+    existing = db.query(EventRegistration).filter(EventRegistration.event_id == reg.event_id, EventRegistration.student_id == current_user.id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Already registered")
     db_reg = EventRegistration(**reg.model_dump(), student_id=current_user.id)
     db.add(db_reg)
     db.commit()

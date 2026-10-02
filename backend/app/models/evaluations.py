@@ -7,6 +7,7 @@ class Assignment(Base):
     __tablename__ = "assignments"
     id = Column(Integer, primary_key=True, index=True)
     subject_id = Column(Integer, ForeignKey("subjects.id"))
+    division_id = Column(Integer, ForeignKey("divisions.id"), nullable=True)
     teacher_id = Column(Integer, ForeignKey("users.id"))
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
@@ -31,6 +32,7 @@ class Exam(Base):
     __tablename__ = "exams"
     id = Column(Integer, primary_key=True, index=True)
     subject_id = Column(Integer, ForeignKey("subjects.id"))
+    division_id = Column(Integer, ForeignKey("divisions.id"), nullable=True)
     title = Column(String, nullable=False)
     exam_date = Column(DateTime, nullable=False)
     total_marks = Column(Integer, nullable=False)

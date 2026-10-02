@@ -5,7 +5,7 @@ import { colors } from '../theme/colors';
 
 interface ScreenProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: any;
 }
 
 export function Screen({ children, style }: ScreenProps) {

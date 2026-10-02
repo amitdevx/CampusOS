@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { login, setAuthToken, getMe } from '@campusos/api-client';
 
 const ROLES = [
-  { id: 'STUDENT', label: 'Student', email: 'student@gmail.com' },
+  { id: 'STUDENT', label: 'Student', email: 'student@campusos.com' },
   { id: 'TEACHER', label: 'Teacher', email: 'teacher@campusos.com' },
   { id: 'FACULTY', label: 'Faculty', email: 'faculty@campusos.com' },
-  { id: 'ADMIN', label: 'Admin', email: 'superadmin@campusos.com' },
+  { id: 'ADMIN', label: 'Admin', email: 'admin@campusos.com' },
 ];
 
 export default function LoginPage() {
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [wakingServer, setWakingServer] = useState(false);
   const [error, setError] = useState('');
 
   const handleTabChange = (role: typeof ROLES[0]) => {
@@ -26,9 +27,23 @@ export default function LoginPage() {
     setError('');
   };
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loading) {
+      // If still loading after 3 seconds, assume Render is cold-starting
+      timer = setTimeout(() => {
+        setWakingServer(true);
+      }, 3000);
+    } else {
+      setWakingServer(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setWakingServer(false);
     setError('');
 
     // Fallback to placeholder email if left blank (for quick testing)
@@ -55,9 +70,18 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.detail || 'Invalid email or password');
+      if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        setError('Server timeout. Waking up the cloud environment took too long. Please retry.');
+      } else if (!err.response) {
+        setError('Network error. The server is unreachable or offline.');
+      } else if (err.response?.status === 401) {
+        setError('Incorrect email or password.');
+      } else {
+        setError(err.response?.data?.detail || 'An unexpected error occurred during login.');
+      }
     } finally {
       setLoading(false);
+      setWakingServer(false);
     }
   };
 
@@ -135,10 +159,17 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold tracking-wide uppercase text-white bg-[#09090B] hover:bg-[#27272A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#09090B] disabled:opacity-50 transition-all duration-200"
+                className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold tracking-wide uppercase text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#09090B] disabled:opacity-50 transition-all duration-200 ${
+                  wakingServer ? 'bg-[#27272A] animate-pulse' : 'bg-[#09090B] hover:bg-[#27272A]'
+                }`}
               >
-                {loading ? 'Authenticating...' : 'Authenticate'}
+                {wakingServer ? 'Waking up server...' : loading ? 'Authenticating...' : 'Authenticate'}
               </button>
+              {wakingServer && (
+                <p className="text-center text-xs text-[#71717A] mt-3 font-medium">
+                  Cloud instance is booting from sleep. This may take up to 30 seconds.
+                </p>
+              )}
             </div>
           </form>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getMySchedule, startAttendanceSession, getAttendanceRecords, getUsers } from '@campusos/api-client';
+import { getMySchedule, startAttendanceSession, closeAttendanceSession, getAttendanceRecords, getUsers } from '@campusos/api-client';
 import QRCode from 'react-qr-code';
 import { Users, CheckCircle } from 'lucide-react';
 
@@ -23,11 +23,14 @@ function formatTime(iso: string) {
   }
 }
 
-function isSessionActive(start_time: string, end_time: string) {
+function getSessionState(start_time: string, end_time: string) {
   const now = new Date().getTime();
   const start = new Date(start_time).getTime() - 30 * 60 * 1000; // 30 mins before
   const end = new Date(end_time).getTime() + 90 * 60 * 1000;     // 90 mins after
-  return now >= start && now <= end;
+  
+  if (now >= start && now <= end) return 'ACTIVE';
+  if (now < start) return 'UPCOMING';
+  return 'COMPLETED';
 }
 
 export default function TeacherTimetablePage() {
@@ -82,6 +85,18 @@ export default function TeacherTimetablePage() {
     }
   };
 
+  const handleEndSession = async () => {
+    if (activeSessionId) {
+      try {
+        await closeAttendanceSession(activeSessionId);
+      } catch (err) {
+        console.error('Failed to close session', err);
+      }
+    }
+    setQrSecret(null);
+    setActiveSessionId(null);
+  };
+
   const getStudentName = (id: number) => {
     const user = allUsers.find(u => u.id === id);
     return user ? user.full_name : `Student #${id}`;
@@ -103,15 +118,64 @@ export default function TeacherTimetablePage() {
     );
   }
 
+  const activeSessions = sessions.filter(c => getSessionState(c.start_time, c.end_time) === 'ACTIVE');
+  const upcomingSessions = sessions.filter(c => getSessionState(c.start_time, c.end_time) === 'UPCOMING');
+  const completedSessions = sessions.filter(c => getSessionState(c.start_time, c.end_time) === 'COMPLETED');
+
+  const SessionCard = ({ c, type }: { c: ClassSession, type: 'ACTIVE' | 'UPCOMING' | 'COMPLETED' }) => (
+    <div className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 md:items-center hover:bg-[#FAFAFA] transition-colors ${type === 'COMPLETED' ? 'opacity-60' : ''}`}>
+      <div className="col-span-1 md:col-span-3">
+        <p className="text-sm font-bold text-[#09090B]">Subject #{c.subject_id}</p>
+        <span className="inline-block mt-1 px-2 py-0.5 bg-[#F4F4F5] text-[#09090B] font-mono text-[10px] uppercase rounded border border-[#E4E4E7]">
+          DIV-{c.division_id}
+        </span>
+      </div>
+      
+      <div className="col-span-1 md:col-span-2">
+        <p className="text-sm font-medium text-[#52525B] flex items-center gap-1.5">
+          <span className={`w-2 h-2 rounded-full ${type === 'ACTIVE' ? 'bg-[#10B981]' : type === 'UPCOMING' ? 'bg-[#3B82F6]' : 'bg-[#D4D4D8]'}`}></span>
+          {c.room}
+        </p>
+      </div>
+      
+      <div className="col-span-1 md:col-span-3">
+        <p className="text-sm font-semibold text-[#09090B]">
+          {new Date(c.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+        </p>
+        <p className="text-xs text-[#71717A] mt-0.5 font-mono">
+          {formatTime(c.start_time)} - {formatTime(c.end_time)}
+        </p>
+      </div>
+      
+      <div className="col-span-1 md:col-span-4 md:text-right flex items-center md:justify-end">
+        {type === 'ACTIVE' ? (
+          <button 
+            onClick={() => handleStartAttendance(c.id)}
+            disabled={generating}
+            className="flex-1 md:flex-none inline-flex items-center justify-center px-4 py-2 text-xs font-bold tracking-widest uppercase rounded-md text-white bg-[#09090B] hover:bg-[#27272A] border border-[#09090B] transition-colors shadow-sm disabled:opacity-50"
+          >
+            {generating ? 'GENERATING...' : 'PROJECT QR PASS'}
+          </button>
+        ) : type === 'COMPLETED' ? (
+          <span className="text-[10px] font-bold text-[#71717A] tracking-widest uppercase border border-[#E4E4E7] bg-[#FAFAFA] px-3 py-1.5 rounded-md">
+            SESSION COMPLETED
+          </span>
+        ) : (
+          <span className="text-[10px] font-bold text-[#3B82F6] tracking-widest uppercase border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-1.5 rounded-md">
+            UPCOMING CLASS
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-white rounded-xl border border-[#E4E4E7] p-8 shadow-sm relative">
       
-      {/* QR MODAL (Rendered at top level when active) */}
       {qrSecret && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#09090B]/90 backdrop-blur-sm p-4 md:p-12">
           <div className="bg-white rounded-3xl shadow-2xl flex flex-col md:flex-row w-full max-w-5xl h-[85vh] overflow-hidden border border-[#27272A]">
             
-            {/* Left Side: QR Code Display */}
             <div className="flex-1 flex flex-col items-center justify-center p-10 bg-[#FAFAFA] border-r border-[#E4E4E7]">
               <h2 className="text-3xl font-bold tracking-tight text-[#09090B] mb-2">Live Access Portal</h2>
               <p className="text-sm font-medium text-[#71717A] mb-12 uppercase tracking-widest">Scan using CampusOS Mobile</p>
@@ -121,14 +185,13 @@ export default function TeacherTimetablePage() {
               </div>
 
               <button 
-                onClick={() => { setQrSecret(null); setActiveSessionId(null); }}
+                onClick={handleEndSession}
                 className="w-64 py-4 bg-[#09090B] text-white rounded-xl font-bold uppercase tracking-widest hover:bg-[#27272A] transition-colors"
               >
                 End Session
               </button>
             </div>
 
-            {/* Right Side: Live Attendees Feed */}
             <div className="w-full md:w-96 flex flex-col bg-white h-full">
               <div className="p-6 border-b border-[#E4E4E7] bg-[#FAFAFA] flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -172,76 +235,58 @@ export default function TeacherTimetablePage() {
         </div>
       )}
 
-      <div className="flex justify-between items-end mb-8 pb-4 border-b border-[#F4F4F5]">
-        <div>
-          <h3 className="text-xl font-bold tracking-tight text-[#09090B]">Master Instructor Schedule</h3>
-          <p className="text-sm font-medium text-[#71717A] mt-1">Manage classes and project attendance codes.</p>
-        </div>
+      <div className="mb-10 border-b border-[#E4E4E7] pb-6">
+        <h3 className="text-2xl font-black tracking-tight text-[#09090B]">Master Instructor Schedule</h3>
+        <p className="text-sm font-medium text-[#71717A] mt-2 max-w-2xl">
+          Project QR passes for actionable classes. Past and future sessions are strictly categorized to prevent unauthorized attendance records.
+        </p>
       </div>
 
-      <div>
-        {sessions.length === 0 ? (
-          <div className="text-center p-12 border border-dashed border-[#D4D4D8] rounded-xl bg-[#FAFAFA]">
-            <p className="text-sm font-medium text-[#A1A1AA]">No active classes assigned to your terminal.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-[#E4E4E7] border border-[#E4E4E7] rounded-xl overflow-hidden bg-white">
-            <div className="grid grid-cols-12 gap-4 p-4 bg-[#FAFAFA] border-b border-[#E4E4E7] text-xs font-bold text-[#71717A] uppercase tracking-wider hidden md:grid">
-              <div className="col-span-3">Session</div>
-              <div className="col-span-2">Location</div>
-              <div className="col-span-3">Time Window</div>
-              <div className="col-span-4 text-right">Operations</div>
+      <div className="space-y-12">
+        {/* ACTIVE NOW */}
+        <div>
+          <h4 className="text-xs font-bold text-[#10B981] uppercase tracking-widest flex items-center gap-2 mb-4">
+            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+            Active Action Window ({activeSessions.length})
+          </h4>
+          
+          {activeSessions.length === 0 ? (
+            <div className="p-6 border border-dashed border-[#E4E4E7] rounded-xl bg-[#FAFAFA]">
+              <p className="text-sm text-[#A1A1AA] font-medium">No sessions currently in the actionable (-30m to +90m) window.</p>
             </div>
-            
-            {sessions.slice().sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()).map((c) => {
-              const active = isSessionActive(c.start_time, c.end_time);
-              return (
-                <div key={c.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 md:items-center hover:bg-[#FAFAFA] transition-colors">
-                  
-                  <div className="col-span-1 md:col-span-3">
-                    <p className="text-sm font-bold text-[#09090B]">Subject #{c.subject_id}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 bg-[#F4F4F5] text-[#09090B] font-mono text-[10px] uppercase rounded border border-[#E4E4E7]">
-                      DIV-{c.division_id}
-                    </span>
-                  </div>
-                  
-                  <div className="col-span-1 md:col-span-2">
-                    <p className="text-sm font-medium text-[#52525B] flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${active ? 'bg-[#10B981]' : 'bg-[#D4D4D8]'}`}></span>
-                      {c.room}
-                    </p>
-                  </div>
-                  
-                  <div className="col-span-1 md:col-span-3">
-                    <p className="text-sm font-semibold text-[#09090B]">
-                      {new Date(c.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                    </p>
-                    <p className="text-xs text-[#71717A] mt-0.5 font-mono">
-                      {formatTime(c.start_time)} - {formatTime(c.end_time)}
-                    </p>
-                  </div>
-                  
-                  <div className="col-span-1 md:col-span-4 md:text-right flex items-center md:justify-end">
-                    {active ? (
-                      <button 
-                        onClick={() => handleStartAttendance(c.id)}
-                        disabled={generating}
-                        className="flex-1 md:flex-none inline-flex items-center justify-center px-4 py-2 text-xs font-bold tracking-widest uppercase rounded-md text-white bg-[#09090B] hover:bg-[#27272A] border border-[#09090B] transition-colors shadow-sm disabled:opacity-50"
-                      >
-                        {generating ? 'GENERATING...' : 'PROJECT QR PASS'}
-                      </button>
-                    ) : (
-                      <span className="text-[10px] font-bold text-[#A1A1AA] tracking-widest uppercase">
-                        Outside Action Window
-                      </span>
-                    )}
-                  </div>
+          ) : (
+            <div className="divide-y divide-[#E4E4E7] border border-[#10B981]/20 rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-[#10B981]/20">
+              {activeSessions.map(c => <SessionCard key={c.id} c={c} type="ACTIVE" />)}
+            </div>
+          )}
+        </div>
 
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {/* UPCOMING */}
+        <div>
+          <h4 className="text-xs font-bold text-[#3B82F6] uppercase tracking-widest flex items-center gap-2 mb-4">
+            Upcoming Classes ({upcomingSessions.length})
+          </h4>
+          
+          {upcomingSessions.length > 0 && (
+            <div className="divide-y divide-[#E4E4E7] border border-[#E4E4E7] rounded-xl overflow-hidden bg-white">
+              {upcomingSessions.map(c => <SessionCard key={c.id} c={c} type="UPCOMING" />)}
+            </div>
+          )}
+        </div>
+
+        {/* COMPLETED */}
+        <div>
+          <h4 className="text-xs font-bold text-[#71717A] uppercase tracking-widest flex items-center gap-2 mb-4">
+            Completed Sessions ({completedSessions.length})
+          </h4>
+          
+          {completedSessions.length > 0 && (
+            <div className="divide-y divide-[#E4E4E7] border border-[#E4E4E7] rounded-xl overflow-hidden bg-white opacity-80">
+              {completedSessions.map(c => <SessionCard key={c.id} c={c} type="COMPLETED" />)}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

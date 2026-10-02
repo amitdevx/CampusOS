@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -20,6 +20,20 @@ import ResourcesScreen from './screens/ResourcesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+export const navigationRef = createNavigationContainerRef<any>();
+
+export async function logout() {
+  await SecureStore.deleteItemAsync('userToken');
+  await SecureStore.deleteItemAsync('userRole');
+  setAuthToken(null);
+  if (navigationRef.isReady()) {
+    navigationRef.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    });
+  }
+}
 
 function StudentNavigator() {
   return (
@@ -123,33 +137,26 @@ export default function App() {
     async function restoreSession() {
       try {
         const token = await SecureStore.getItemAsync('userToken');
-        const cachedRole = await SecureStore.getItemAsync('userRole');
         
-        if (token && cachedRole) {
+        if (token) {
           setAuthToken(token);
-          setInitialRole(cachedRole);
-          setInitialRoute('Main');
-          validateSessionInBackground();
+          try {
+            const user = await getMe();
+            await SecureStore.setItemAsync('userRole', user.role);
+            setInitialRole(user.role);
+            setInitialRoute('Main');
+          } catch (err: any) {
+            console.error("Token validation failed on launch", err);
+            await SecureStore.deleteItemAsync('userToken');
+            await SecureStore.deleteItemAsync('userRole');
+            setAuthToken(null);
+            setInitialRoute('Login');
+          }
         }
       } catch (e) {
         console.error("Session restore error", e);
       } finally {
         setIsReady(true);
-      }
-    }
-    
-    async function validateSessionInBackground() {
-      try {
-        const user = await getMe();
-        await SecureStore.setItemAsync('userRole', user.role);
-        setInitialRole(user.role);
-      } catch (err: any) {
-        const status = err?.response?.status;
-        if (status === 401 || status === 403) {
-          await SecureStore.deleteItemAsync('userToken');
-          await SecureStore.deleteItemAsync('userRole');
-          setAuthToken(null);
-        }
       }
     }
 
@@ -163,12 +170,12 @@ export default function App() {
   }, [initialRoute, expoPushToken]);
 
   if (!isReady) {
-    return null;
+    return null; 
   }
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Main" component={MainNavigator} initialParams={{ role: initialRole }} />
