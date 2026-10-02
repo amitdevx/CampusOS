@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
+from .websockets import manager
+import asyncio, status
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -53,6 +55,21 @@ def create_notice(notice: NoticeCreate, db: SessionDep, current_user: CurrentUse
     db_notice = Notice(**notice.model_dump(), author_id=current_user.id)
     db.add(db_notice)
     db.commit()
+    db.refresh(db_notice)
+    
+    # Broadcast to all connected clients
+    try:
+        loop = asyncio.get_event_loop()
+        loop.create_task(manager.broadcast({
+            "type": "notification",
+            "title": db_notice.title,
+            "payload": "A new notice was posted on the notice board."
+        }))
+    except Exception as e:
+        pass
+        
+    return db_notice
+
     db.refresh(db_notice)
     return db_notice
 
