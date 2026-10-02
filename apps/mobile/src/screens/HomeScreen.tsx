@@ -115,7 +115,7 @@ export default function HomeScreen({ navigation }: any) {
                   </View>
 
                   <View style={styles.timelineContent}>
-                    <Text style={styles.sessionSubject}>Subject #{session.subject_id}</Text>
+                    <Text style={styles.sessionSubject}>{session.subject_name || 'Unknown Subject'}</Text>
                     <View style={styles.locationRow}>
                       <MapPin size={12} color={colors.textSecondary} />
                       <Text style={styles.sessionDetail}>Room {session.room}</Text>

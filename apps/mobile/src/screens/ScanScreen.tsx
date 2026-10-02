@@ -10,7 +10,7 @@ import {
 import { CameraView, Camera } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import { X, CheckCircle, Loader2 } from 'lucide-react-native';
-import { Screen } from '../components/Screen';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { markAttendance } from '@campusos/api-client';
 import { colors } from '../theme/colors';
 
@@ -25,6 +25,7 @@ interface SuccessData {
 }
 
 export default function ScanScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
@@ -126,9 +127,9 @@ export default function ScanScreen() {
       </View>
 
       {/* Top bar */}
-      <Screen style={[styles.topBar, { backgroundColor: 'transparent' }]}>
+      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 16) }]}>
         <Text style={styles.title}>Scan Attendance</Text>
-      </Screen>
+      </View>
 
       {/* Bottom instructions */}
       {scanState === 'scanning' && (

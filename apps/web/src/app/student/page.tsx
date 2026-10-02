@@ -78,7 +78,7 @@ export default function StudentDashboardPage() {
                       {new Date(session.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).replace(' ', '\n')}
                     </div>
                     <div>
-                      <h4 className="text-base font-semibold text-[#09090B]">Subject #{session.subject_id}</h4>
+                      <h4 className="text-base font-semibold text-[#09090B]">{session.subject_name || 'Unknown Subject'}</h4>
                       <p className="text-[#71717A] text-sm mt-0.5 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
                         Room {session.room}

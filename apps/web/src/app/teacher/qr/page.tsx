@@ -69,7 +69,7 @@ export default function TeacherQRPage() {
                     <option value="" disabled>Select a class...</option>
                     {classes.map(c => (
                       <option key={c.id} value={c.id.toString()}>
-                        Subject #{c.subject_id} | Room {c.room} | {new Date(c.start_time).toLocaleString()}
+                        {c.subject_name || 'Unknown Subject'} | Room {c.room} | {new Date(c.start_time).toLocaleString()}
                       </option>
                     ))}
                   </select>

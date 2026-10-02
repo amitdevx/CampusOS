@@ -130,7 +130,7 @@ export default function GenerateQRScreen() {
             <View style={styles.infoSection}>
               <Text style={styles.infoLabel}>Active Session</Text>
               <Text style={styles.infoTitle}>
-                Subject #{selectedClass?.subject_id}
+                {selectedClass?.subject_name || "Unknown Subject"}
               </Text>
               <View style={styles.infoRow}>
                 <MapPin size={14} color={colors.textSecondary} />
@@ -182,7 +182,7 @@ export default function GenerateQRScreen() {
                   >
                     <View style={styles.classCardContent}>
                       <Text style={[styles.classCardTitle, selectedClass?.id === c.id && styles.classCardTitleSelected]}>
-                        Subject #{c.subject_id}
+                        {c.subject_name || "Unknown Subject"}
                       </Text>
                       <View style={styles.classCardMeta}>
                         <View style={styles.infoRow}>
