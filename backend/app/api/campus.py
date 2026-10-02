@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from .websockets import manager
-import asyncio, status
+import asyncio
+from fastapi import status
 from sqlalchemy.orm import Session
 from typing import List
 
