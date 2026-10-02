@@ -5,7 +5,7 @@ This guide ensures full validation of every major user workflow, focusing on cro
 ---
 
 ## 👥 Test Accounts (Password for all: `campusos2026`)
-- **Super Admin**: `admin@campusos.com` (Has full access to `/super-admin`)
+- **Super Admin**: `superadmin@campusos.com`\n- **Admin**: `admin@campusos.com` (Has full access to `/super-admin`)
 - **Teacher**: `teacher@campusos.com`
 - **Faculty**: `faculty@campusos.com`
 - **Student**: `student@campusos.com`

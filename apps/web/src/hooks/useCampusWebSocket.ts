@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { getMe } from '@campusos/api-client';
-import axios from 'axios';
 
 export function useCampusWebSocket() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -8,14 +7,17 @@ export function useCampusWebSocket() {
   
     const fetchHistory = async (userId: number) => {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('userToken') : require('expo-secure-store').getItemAsync('userToken');
-        const _token = await Promise.resolve(token);
-        const API_URL = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL : 'https://campusos-api-3r6a.onrender.com';
+        const token = typeof window !== 'undefined' ? localStorage.getItem('userToken') : null;
+        if (!token) return;
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://campusos-api-3r6a.onrender.com';
         
-        const res = await axios.get(API_URL + '/api/v1/notifications/', {
-           headers: { Authorization: 'Bearer ' + _token }
+        const res = await fetch(API_URL + '/api/v1/notifications/', {
+           headers: { Authorization: 'Bearer ' + token }
         });
-        setNotifications(res.data);
+        if (res.ok) {
+           const data = await res.json();
+           setNotifications(data);
+        }
       } catch (e) {}
     };
 
