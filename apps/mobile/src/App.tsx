@@ -133,7 +133,7 @@ export default function App() {
           setAppState('READY');
         } else {
           // It's a network error or server asleep
-          setErrorMsg('Cannot connect to the CampusOS server. It might be waking up or offline.');
+          setErrorMsg('Cannot connect to the ResoSync server. It might be waking up or offline.');
           setAppState('ERROR');
         }
       }

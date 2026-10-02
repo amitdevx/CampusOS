@@ -178,7 +178,7 @@ export default function TeacherTimetablePage() {
             
             <div className="flex-1 flex flex-col items-center justify-center p-10 bg-[#FAFAFA] border-r border-[#E4E4E7]">
               <h2 className="text-3xl font-bold tracking-tight text-[#09090B] mb-2">Live Access Portal</h2>
-              <p className="text-sm font-medium text-[#71717A] mb-12 uppercase tracking-widest">Scan using CampusOS Mobile</p>
+              <p className="text-sm font-medium text-[#71717A] mb-12 uppercase tracking-widest">Scan using ResoSync Mobile</p>
               
               <div className="p-8 bg-white border-4 border-[#09090B] rounded-[2rem] shadow-xl mb-12">
                 <QRCode value={JSON.stringify({ type: "ATTENDANCE", sessionId: activeSessionId, secret: qrSecret })} size={320} level="H" />

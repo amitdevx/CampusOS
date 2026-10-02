@@ -66,7 +66,7 @@ export default function ScanScreen() {
         });
         setScanState('success');
       } else {
-        throw new Error('Invalid QR format. Not a CampusOS attendance code.');
+        throw new Error('Invalid QR format. Not a ResoSync attendance code.');
       }
     } catch (error: any) {
       const msg = error?.response?.data?.detail || 'QR code is invalid or expired.';
