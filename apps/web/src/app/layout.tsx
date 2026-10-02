@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ResoSync — Connected Campus Platform",
+  title: "ResoSync - Campus Management",
   description: "Manage classes, attendance, resources, events and campus operations from one connected platform.",
 };
 
