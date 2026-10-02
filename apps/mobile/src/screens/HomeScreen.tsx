@@ -54,7 +54,7 @@ export default function HomeScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <Text style={styles.brandText}>ResoSync</Text>
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7} onPress={() => setShowNotifs(true)}>
             <Bell size={20} color={colors.text} />
             {notifications.length > 0 && <View style={styles.badge} />}
           </TouchableOpacity>
@@ -115,7 +115,7 @@ export default function HomeScreen({ navigation }: any) {
                   </View>
 
                   <View style={styles.timelineContent}>
-                    <Text style={styles.sessionSubject}>{session.subject_name || 'Unknown Subject'}</Text>
+                    <Text style={styles.sessionSubject} numberOfLines={1} ellipsizeMode="tail">{session.subject_name || 'Unknown Subject'}</Text>
                     <View style={styles.locationRow}>
                       <MapPin size={12} color={colors.textSecondary} />
                       <Text style={styles.sessionDetail}>Room {session.room}</Text>
@@ -127,6 +127,32 @@ export default function HomeScreen({ navigation }: any) {
           )}
         </View>
       </ScrollView>
+    
+      <Modal visible={showNotifs} transparent animationType="fade">
+        <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center'}}>
+          <View style={{width: '85%', backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '70%'}}>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16}}>
+              <Text style={{fontSize: 18, fontWeight: 'bold'}}>System Alerts</Text>
+              <TouchableOpacity onPress={() => setShowNotifs(false)}>
+                <Text style={{color: 'red', fontWeight: 'bold'}}>Close</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {notifications.length === 0 ? (
+                <Text style={{color: '#888', textAlign: 'center', marginTop: 20}}>No active alerts.</Text>
+              ) : (
+                notifications.map((n, i) => (
+                  <View key={i} style={{padding: 12, backgroundColor: '#f5f5f5', borderRadius: 8, marginBottom: 8}}>
+                    <Text style={{fontWeight: 'bold', fontSize: 14}}>{n.title || 'Notification'}</Text>
+                    <Text style={{fontSize: 13, color: '#555', marginTop: 4}}>{n.message || n}</Text>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+  
     </Screen>
   );
 }

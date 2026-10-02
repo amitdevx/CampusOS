@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from .deps import SessionDep, CurrentUser
+from ..models.notifications import Notification
+from ..models.user import User
 from ..models.campus import Event, EventRegistration, Resource, Booking, Notice
 from ..schemas.campus import (
     EventCreate, EventResponse,
@@ -51,25 +53,39 @@ def register_event(reg: EventRegistrationCreate, db: SessionDep, current_user: C
 # --- Notices ---
 @router.post("/notices", response_model=NoticeResponse)
 def create_notice(notice: NoticeCreate, db: SessionDep, current_user: CurrentUser):
-    if current_user.role not in ["FACULTY", "ADMIN"]:
+    if current_user.role not in ["FACULTY", "ADMIN", "SUPER_ADMIN"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     db_notice = Notice(**notice.model_dump(), author_id=current_user.id)
     db.add(db_notice)
     db.commit()
     db.refresh(db_notice)
     
+    # Create persistent notifications for everyone
+    users = db.query(User).all()
+    notifs = []
+    for u in users:
+        notifs.append(Notification(user_id=u.id, title=db_notice.title, message="New Campus Notice: " + notice.content[:50], type="SYSTEM_ALERT"))
+    
+    if notifs:
+        db.bulk_save_objects(notifs)
+        db.commit()
+
     # Broadcast to all connected clients
     try:
         loop = asyncio.get_event_loop()
         loop.create_task(manager.broadcast({
             "type": "notification",
-            "title": db_notice.title,
-            "payload": "A new notice was posted on the notice board."
+            "payload": {
+                "title": db_notice.title,
+                "message": "New Campus Notice: " + notice.content[:50],
+                "type": "SYSTEM_ALERT"
+            }
         }))
     except Exception as e:
         pass
         
     return db_notice
+
 
     db.refresh(db_notice)
     return db_notice

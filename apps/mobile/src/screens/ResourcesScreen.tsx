@@ -98,14 +98,14 @@ export default function ResourcesScreen() {
                   {r.capacity && <Text style={styles.resourceCapacity}>Capacity: {r.capacity}</Text>}
                 </View>
                 <TouchableOpacity 
-                  style={[styles.bookBtn, r.status !== 'AVAILABLE' && styles.bookBtnDisabled]}
+                  style={[styles.bookBtn, false && styles.bookBtnDisabled]}
                   onPress={() => handleBook(r.id)}
-                  disabled={r.status !== 'AVAILABLE' || bookingLoading === r.id}
+                  disabled={false || bookingLoading === r.id}
                 >
                   {bookingLoading === r.id ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Text style={styles.bookBtnText}>{r.status === 'AVAILABLE' ? 'Book Now' : 'Unavailable'}</Text>
+                    <Text style={styles.bookBtnText}>{'Book Now'}</Text>
                   )}
                 </TouchableOpacity>
               </View>

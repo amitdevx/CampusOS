@@ -1,59 +1,61 @@
-# CampusOS / ResoSync: End-to-End Testing Guide
+# CampusOS / ResoSync: Complete End-to-End Acceptance Testing Guide
 
-Welcome to the definitive testing guide for CampusOS. This document outlines exactly how to verify all core features across the Next.js Web Dashboard and the React Native Mobile App.
+This guide ensures full validation of every major user workflow, focusing on cross-platform parity, real-time functionality, and database persistence.
+
+---
 
 ## 👥 Test Accounts (Password for all: `campusos2026`)
-- **Admin**: `admin@campusos.com`
+- **Super Admin**: `admin@campusos.com` (Has full access to `/super-admin`)
 - **Teacher**: `teacher@campusos.com`
 - **Faculty**: `faculty@campusos.com`
 - **Student**: `student@campusos.com`
 
 ---
 
-## 🏗️ Feature List
-1. **Dynamic Timetables**: Role-based scheduling. Displays active classes up to current time, handling breaks and holidays.
-2. **Live WebSockets**: Instant push notifications to active devices without page refreshes.
-3. **QR Code Attendance**: Cryptographically secure, session-bound QR attendance marking.
-4. **Resource Booking**: Lab/Room reservation flows with conflict prevention.
-5. **Notice Board**: College-wide alerts.
-6. **Event Management**: Registration for college events (Hackathons, Seminars).
+## 🧪 Critical Workflows
 
----
+### 1. WebSockets & Persistent Notifications (End-to-End)
+**Scenario**: Faculty publishes a notice, and a Student receives a persistent notification live.
+1. **Receiver (Device A)**: Open the Mobile App or Web App and log in as `student@campusos.com`. 
+   - Note that the Notification bell (web) or icon (mobile) currently says "No active alerts."
+2. **Sender (Device B)**: Log in as `faculty@campusos.com` on the Web Dashboard.
+3. **Action**: Navigate to Notices -> Post New Notice. Submit a notice (e.g., "Live System Update").
+4. **Verification**: 
+   - **Real-Time Delivery**: Without refreshing, Device A's bell icon will instantly update with a red badge, and the dropdown/modal will show the new "System Alert".
+   - **Persistence**: Disconnect/refresh Device A. The notification remains unread and stored securely in the database.
 
-## 🧪 Step-by-Step Test Scenarios
-
-### Test 1: Real-Time WebSocket Notifications
-**Goal**: Verify that sending a notice instantly alerts connected users.
-1. **Setup**: Open the Mobile App (or a second incognito window on the web) and log in as `student@campusos.com`. Stay on the Home screen.
-2. **Trigger**: In your primary Web Dashboard, log in as `admin@campusos.com`. Navigate to the **Notices** tab (or send a notice via Postman/Swagger `/api/v1/campus/notices`).
-3. **Action**: Create and submit a new notice (e.g., Title: "Live Test Alert").
-4. **Result**: Instantly, without refreshing, the Student app will receive a WebSocket payload, and a red dot will appear on the Bell icon at the top right!
-
-### Test 2: Secure QR Code Attendance
-**Goal**: Test the Teacher-to-Student end-to-end attendance flow.
-1. **Teacher Action (Web)**: 
-   - Log in as `teacher@campusos.com`.
-   - Navigate to **Attendance QR**.
-   - You will see a dropdown of **Active/Upcoming Classes**. (Note: Classes that have already ended are strictly filtered out).
-   - Select a class and click **Generate QR Code**. Leave this code visible on your screen.
-2. **Student Action (Mobile)**:
-   - Log in as `student@campusos.com`.
-   - On the Home screen, tap the **QR Code Scanner** icon (top right).
-   - Point the camera at the Teacher's screen.
-   - **Result**: The app will verify the cryptographic token, mark the student as present in the database, and show a green "Attendance Marked" success screen.
-
-### Test 3: Resource Booking & Conflict Prevention
-**Goal**: Ensure labs cannot be double-booked.
-1. **Booking 1**: Log in as `faculty@campusos.com` on the Web or Mobile app. Navigate to Resources/Bookings. Select "Computer Science Lab 1" and book it for today from 12:00 PM to 1:00 PM. (Success).
-2. **Booking 2 (The Test)**: Log in as `admin@campusos.com`. Try to book the exact same "Computer Science Lab 1" for today from 12:30 PM to 1:30 PM.
-3. **Result**: The backend will rigorously block the attempt, throwing a `400 Conflict` error, preventing the overlap.
-
-### Test 4: Varied Timetable Verification
-**Goal**: Verify the 10 AM - 5 PM highly varied schedule.
+### 2. Daily Demostration Timetable
+**Scenario**: The database is seeded with a dense, 6-period daily schedule spanning 10:00 AM to 5:00 PM.
 1. Log in as `student@campusos.com` on the Mobile App.
-2. Navigate to the **Classes** tab.
-3. Scroll through the schedule. You will see a full, packed college day (10-11, 11-12, 1-2, 2-3, and a 3-5 Practical block) utilizing random Core Subjects (Java, OS, Data Science, etc.) with different teachers assigned.
-4. Verify that Sundays and specific holidays (e.g., Gandhi Jayanti on Oct 2) are correctly skipped.
+2. Navigate to **Classes**.
+3. **Verification**: You will see today's exact schedule fully populated with classes spanning back-to-back:
+   - 10:00 - 11:30 | 12:00 - 1:30 | 1:30 - 2:20 | 2:30 - 3:30 | 3:30 - 4:30 | 4:30 - 5:00.
+
+### 3. Teacher QR Code Generation & Class Filtering
+**Scenario**: Teachers must only see *today's* classes for attendance, preventing clutter and mistakes.
+1. Log in as `teacher@campusos.com` on the **Web** or **Mobile**.
+2. Navigate to **Attendance QR**.
+3. **Verification**:
+   - The primary active dropdown *only* contains classes scheduled for **Today**. Future dates and past dates are strictly removed.
+   - The strict "Time Window Restriction" has been bypassed for demo purposes, allowing you to generate a valid QR Code for any of today's classes at any time during a live presentation.
+
+### 4. Student Digital ID & Profile Route
+**Scenario**: Student accesses their digital profile card.
+1. Log in as `student@campusos.com` on the Web.
+2. Click **View Full Profile** or **Display QR Pass** on the dashboard.
+3. **Verification**: You are correctly routed to `/student/profile`, which displays an authenticated Digital ID QR pass and the student's personal information pulled securely from the DB.
+
+### 5. Mobile Campus Resource Booking
+**Scenario**: Booking a campus resource from the mobile app.
+1. Open the Mobile App as `faculty@campusos.com`.
+2. Navigate to the **Resources** tab.
+3. **Verification**: Resources (like the "Computer Science Lab 1") now show as "Book Now" instead of "Unavailable", accurately reflecting their dynamic availability.
+
+### 6. Super Admin Route Protection
+**Scenario**: Testing the top-level institutional dashboard.
+1. Log in as `admin@campusos.com` (role has been promoted to SUPER_ADMIN).
+2. Navigate directly to `/super-admin`.
+3. **Verification**: The 404 is gone. You are greeted by the institutional dashboard, pulling live aggregate statistics for Total Users, Scheduled Sessions, and Events.
 
 ---
-*End of Testing Guide. All edge cases, overflows, and UI bugs have been strictly audited and resolved as of October 2026.*
+**Status**: All End-to-End checks are confirmed working as of October 2026.

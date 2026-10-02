@@ -54,7 +54,7 @@ export default function ClassesScreen() {
                 </Text>
               </View>
               <View style={styles.sessionCard}>
-                <Text style={styles.sessionSubject}>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.sessionSubject}>
                   {item.subject_name || "Unknown Subject"}
                   {item.subject_code ? ` (${item.subject_code})` : ''}
                 </Text>

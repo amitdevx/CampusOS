@@ -33,10 +33,10 @@ export default function StudentDashboardPage() {
             <p className="text-[#A1A1AA] text-sm mt-1">{user?.email}</p>
           </div>
           <div className="mt-8 flex gap-4">
-            <button className="bg-white text-[#09090B] px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-[#F4F4F5] transition-colors">
+            <button onClick={() => window.location.href="/student/profile"} className="bg-white text-[#09090B] px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-[#F4F4F5] transition-colors">
               Display QR Pass
             </button>
-            <button className="bg-[#27272A] text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-[#3F3F46] transition-colors border border-[#3F3F46]">
+            <button onClick={() => window.location.href="/student/profile"} className="bg-[#27272A] text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-[#3F3F46] transition-colors border border-[#3F3F46]">
               View Full Profile
             </button>
           </div>

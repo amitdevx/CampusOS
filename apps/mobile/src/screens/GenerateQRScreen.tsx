@@ -31,8 +31,13 @@ export default function GenerateQRScreen() {
   useEffect(() => {
     getMySchedule()
       .then((data) => {
-        const now = new Date();
-        const active = (data || []).filter((c: any) => new Date(c.end_time) > now);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const active = (data || []).filter((c: any) => {
+           const d = new Date(c.start_time);
+           return d.setHours(0,0,0,0) === today.getTime();
+        });
         setClasses(active);
         if (active.length > 0) setSelectedClass(active[0]);
       })
@@ -183,7 +188,7 @@ export default function GenerateQRScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.classCardContent}>
-                      <Text style={[styles.classCardTitle, selectedClass?.id === c.id && styles.classCardTitleSelected]}>
+                      <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.classCardTitle, selectedClass?.id === c.id && styles.classCardTitleSelected]}>
                         {c.subject_name || "Unknown Subject"}
                       </Text>
                       <View style={styles.classCardMeta}>

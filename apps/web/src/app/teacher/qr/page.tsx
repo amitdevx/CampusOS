@@ -16,11 +16,17 @@ export default function TeacherQRPage() {
     async function load() {
       try {
         const data = await getMySchedule();
-        setClasses(data || []);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         
-        const now = new Date();
-        const active = (data || []).filter((c: any) => new Date(c.end_time) > now);
-        if (active.length > 0) setSelectedClassId(active[0].id.toString());
+        // Only today's classes
+        const todaysClasses = (data || []).filter((c: any) => {
+          const d = new Date(c.start_time);
+          return d.setHours(0,0,0,0) === today.getTime();
+        });
+        
+        setClasses(todaysClasses);
+        if (todaysClasses.length > 0) setSelectedClassId(todaysClasses[0].id.toString());
       } catch (e) {
         console.error(e);
       }
@@ -46,30 +52,26 @@ export default function TeacherQRPage() {
     token: sessionData.secret_token,
   }) : '';
 
-  const now = new Date();
-  const activeClasses = classes.filter(c => new Date(c.end_time) > now);
-  const previousClasses = classes.filter(c => new Date(c.end_time) <= now);
-
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-12">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Attendance QR</h1>
-        <p className="text-gray-500 mt-1">Generate dynamic QR codes for live attendance tracking.</p>
+        <p className="text-gray-500 mt-1">Generate dynamic QR codes for today's live classes.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>1. Select Active Class</CardTitle>
+              <CardTitle>1. Select Today's Class</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Upcoming & Active Classes</label>
-                {activeClasses.length === 0 ? (
+                <label className="block text-sm font-medium text-gray-700 mb-2">Today's Schedule</label>
+                {classes.length === 0 ? (
                   <EmptyState 
-                    title="No Active Classes" 
-                    description="You have no upcoming or active classes right now." 
+                    title="No Classes Today" 
+                    description="You have no classes scheduled for today." 
                     icon={<AlertCircle size={24} />} 
                   />
                 ) : (
@@ -79,9 +81,9 @@ export default function TeacherQRPage() {
                     className="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   >
                     <option value="" disabled>Select a class...</option>
-                    {activeClasses.map(c => (
+                    {classes.map(c => (
                       <option key={c.id} value={c.id.toString()}>
-                        {c.subject_name || 'Unknown Subject'} | Room {c.room} | {new Date(c.start_time).toLocaleString()}
+                        {c.subject_name || 'Unknown Subject'} | Room {c.room} | {new Date(c.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </option>
                     ))}
                   </select>
@@ -96,31 +98,13 @@ export default function TeacherQRPage() {
               
               <Button 
                 onClick={handleGenerate} 
-                disabled={!selectedClassId || activeClasses.length === 0} 
+                disabled={!selectedClassId || classes.length === 0} 
                 className="w-full bg-[#09090B] text-white hover:bg-[#27272A]"
               >
                 Generate QR Code
               </Button>
             </CardContent>
           </Card>
-
-          {previousClasses.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Previous Classes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {previousClasses.map(c => (
-                    <div key={c.id} className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                      <div className="font-semibold text-gray-900">{c.subject_name || 'Unknown Subject'}</div>
-                      <div className="text-gray-500">Ended at: {new Date(c.end_time).toLocaleString()}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         <div>
