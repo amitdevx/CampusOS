@@ -15,8 +15,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const token = localStorage.getItem('userToken');
     const r = localStorage.getItem('userRole');
     
-    if (!token || (r !== 'ADMIN' && r !== 'SUPER_ADMIN')) {
-      router.replace('/login');
+    if (!token || r !== 'ADMIN') {
+      if (r === 'SUPER_ADMIN') {
+        router.replace('/super-admin');
+      } else {
+        router.replace('/login');
+      }
+
     } else {
       setRole(r);
       setAuthToken(token);

@@ -63,9 +63,33 @@ function TeacherNavigator() {
   );
 }
 
-function StaffNavigator() {
+function FacultyNavigator() {
   return (
     <Tab.Navigator screenOptions={tabOptions('#7c3aed')}>
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Classes" component={ClassesScreen} />
+      <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Resources" component={ResourcesScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
+function AdminNavigator() {
+  return (
+    <Tab.Navigator screenOptions={tabOptions('#374151')}>
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Classes" component={ClassesScreen} />
+      <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Resources" component={ResourcesScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
+function SuperAdminNavigator() {
+  return (
+    <Tab.Navigator screenOptions={tabOptions('#09090B')}>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Classes" component={ClassesScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
@@ -92,9 +116,12 @@ const tabOptions = (activeColor: string) => ({ route }: any) => ({
 function MainNavigator({ route }: any) {
   const role = route?.params?.role || 'STUDENT';
   if (role === 'TEACHER') return <TeacherNavigator />;
-  if (role === 'FACULTY' || role === 'ADMIN' || role === 'SUPER_ADMIN') return <StaffNavigator />;
+  if (role === 'FACULTY') return <FacultyNavigator />;
+  if (role === 'ADMIN') return <AdminNavigator />;
+  if (role === 'SUPER_ADMIN') return <SuperAdminNavigator />;
   return <StudentNavigator />;
 }
+
 
 export default function App() {
   const [appState, setAppState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from .deps import SessionDep, CurrentUser, get_current_active_admin
+from .deps import SessionDep, CurrentUser
 from ..models.campus import Event, EventRegistration, Resource, Booking, Notice
 from ..schemas.campus import (
     EventCreate, EventResponse,
@@ -62,7 +62,9 @@ def get_notices(db: SessionDep, current_user: CurrentUser):
 
 # --- Resources & Booking ---
 @router.post("/resources", response_model=ResourceResponse)
-def create_resource(resource: ResourceCreate, db: SessionDep, current_user=Depends(get_current_active_admin)):
+def create_resource(resource: ResourceCreate, db: SessionDep, current_user: CurrentUser):
+    if current_user.role not in ["FACULTY", "ADMIN", "SUPER_ADMIN"]:
+        raise HTTPException(status_code=403, detail="Not authorized to create resources")
     db_resource = Resource(**resource.model_dump())
     db.add(db_resource)
     db.commit()
@@ -72,6 +74,17 @@ def create_resource(resource: ResourceCreate, db: SessionDep, current_user=Depen
 @router.get("/resources", response_model=List[ResourceResponse])
 def get_resources(db: SessionDep, current_user: CurrentUser):
     return db.query(Resource).all()
+
+@router.delete("/resources/{resource_id}", status_code=204)
+def delete_resource(resource_id: int, db: SessionDep, current_user: CurrentUser):
+    if current_user.role not in ["FACULTY", "ADMIN", "SUPER_ADMIN"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete resources")
+    resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    db.delete(resource)
+    db.commit()
+
 
 @router.post("/bookings", response_model=BookingResponse)
 def book_resource(booking: BookingCreate, db: SessionDep, current_user: CurrentUser):

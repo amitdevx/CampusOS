@@ -49,9 +49,15 @@ export default function ClassesScreen() {
                 <Text style={styles.timeText}>
                   {new Date(item.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
+                <Text style={[styles.timeText, { fontSize: 11, color: colors.textSecondary, fontWeight: '500' }]}>
+                  {new Date(item.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                </Text>
               </View>
               <View style={styles.sessionCard}>
-                <Text style={styles.sessionSubject}>Subject #{item.subject_id}</Text>
+                <Text style={styles.sessionSubject}>
+                  {item.subject_name || `Subject #${item.subject_id}`}
+                  {item.subject_code ? ` (${item.subject_code})` : ''}
+                </Text>
                 <View style={styles.sessionDetailsRow}>
                   <View style={styles.detailItem}>
                     <Clock size={12} color={colors.textSecondary} style={styles.detailIcon} />
@@ -64,9 +70,15 @@ export default function ClassesScreen() {
                     <Text style={styles.sessionDetail}>Room {item.room}</Text>
                   </View>
                 </View>
+                {(item.division_name || item.division_id) && (
+                  <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 6, fontWeight: '600' }}>
+                    Division: {item.division_name || `DIV-${item.division_id}`}
+                  </Text>
+                )}
               </View>
             </View>
           )}
+
         />
       )}
     </Screen>

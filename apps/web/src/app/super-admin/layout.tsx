@@ -4,18 +4,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAuthToken } from '@campusos/api-client';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
-import { LayoutDashboard, Building2, Users, BookOpen, BellRing, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Users, Clock, Building2, BookOpen, CalendarDays, ScrollText, ShieldCheck } from 'lucide-react';
 
-
-export default function FacultyLayout({ children }: { children: React.ReactNode }) {
+export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('userToken');
     const role = localStorage.getItem('userRole');
-    
-    if (!token || (role !== 'FACULTY' && role !== 'SUPER_ADMIN')) {
+    if (!token || role !== 'SUPER_ADMIN') {
       router.replace('/login');
     } else {
       setAuthToken(token);
@@ -35,22 +33,22 @@ export default function FacultyLayout({ children }: { children: React.ReactNode 
   }
 
   const links = [
-    { name: 'Dashboard', path: '/faculty', icon: <LayoutDashboard size={20} /> },
-    { name: 'Timetable', path: '/faculty/timetable', icon: <CalendarDays size={20} /> },
-    { name: 'My Department', path: '/faculty/department', icon: <Building2 size={20} /> },
-    { name: 'Teachers', path: '/faculty/teachers', icon: <Users size={20} /> },
-    { name: 'Subjects', path: '/faculty/subjects', icon: <BookOpen size={20} /> },
-    { name: 'Notices', path: '/faculty/notices', icon: <BellRing size={20} /> },
+    { name: 'Dashboard', path: '/super-admin', icon: <LayoutDashboard size={20} /> },
+    { name: 'Users', path: '/super-admin/users', icon: <Users size={20} /> },
+    { name: 'Timetable', path: '/super-admin/timetable', icon: <Clock size={20} /> },
+    { name: 'Departments', path: '/super-admin/departments', icon: <Building2 size={20} /> },
+    { name: 'Subjects', path: '/super-admin/subjects', icon: <BookOpen size={20} /> },
+    { name: 'Events', path: '/super-admin/events', icon: <CalendarDays size={20} /> },
+    { name: 'Audit Logs', path: '/super-admin/audit', icon: <ScrollText size={20} /> },
   ];
-
 
   return (
     <SidebarLayout
       title="ResoSync"
-      subtitle="Faculty Portal"
+      subtitle="Super Admin"
       links={links}
       onLogout={handleLogout}
-      theme="indigo"
+      theme="gray"
     >
       {children}
     </SidebarLayout>

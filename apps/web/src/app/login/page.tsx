@@ -57,7 +57,9 @@ export default function LoginPage() {
       const user = await getMe();
       localStorage.setItem('userRole', user.role);
       
-      if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+      if (user.role === 'SUPER_ADMIN') {
+        router.push('/super-admin');
+      } else if (user.role === 'ADMIN') {
         router.push('/admin');
       } else if (user.role === 'FACULTY') {
         router.push('/faculty');

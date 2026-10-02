@@ -59,6 +59,11 @@ export const createClass = async (data: any) => {
   return response.data;
 };
 
+export const deleteClass = async (sessionId: number) => {
+  await apiClient.delete(`/api/v1/timetable/${sessionId}`);
+};
+
+
 // Events API
 export const getEvents = async () => {
   const response = await apiClient.get('/api/v1/campus/events');
@@ -166,6 +171,11 @@ export const createResource = async (data: any) => {
   const response = await apiClient.post('/api/v1/campus/resources', data);
   return response.data;
 };
+
+export const deleteResource = async (resourceId: number) => {
+  await apiClient.delete(`/api/v1/campus/resources/${resourceId}`);
+};
+
 
 // Notices API
 export const getNotices = async () => {

@@ -57,8 +57,22 @@ class ClassSessionBase(BaseModel):
 class ClassSessionCreate(ClassSessionBase):
     pass
 
+class ConflictDetail(BaseModel):
+    """Structured detail returned in a 409 conflict error."""
+    subject: Optional[str] = None
+    teacher: Optional[str] = None
+    division: Optional[str] = None
+    room: Optional[str] = None
+    start: Optional[datetime] = None
+    end: Optional[datetime] = None
+
 class ClassSessionResponse(ClassSessionBase):
     id: int
+    # Resolved display names — populated by the API layer via joinedload
+    subject_name: Optional[str] = None
+    subject_code: Optional[str] = None
+    teacher_name: Optional[str] = None
+    division_name: Optional[str] = None
     class Config:
         from_attributes = True
 
