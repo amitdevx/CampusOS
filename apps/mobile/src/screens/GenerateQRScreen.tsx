@@ -31,8 +31,10 @@ export default function GenerateQRScreen() {
   useEffect(() => {
     getMySchedule()
       .then((data) => {
-        setClasses(data || []);
-        if (data?.length > 0) setSelectedClass(data[0]);
+        const now = new Date();
+        const active = (data || []).filter((c: any) => new Date(c.end_time) > now);
+        setClasses(active);
+        if (active.length > 0) setSelectedClass(active[0]);
       })
       .catch(() => setFetchError(true))
       .finally(() => setLoading(false));

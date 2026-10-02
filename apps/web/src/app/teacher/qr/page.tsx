@@ -16,8 +16,11 @@ export default function TeacherQRPage() {
     async function load() {
       try {
         const data = await getMySchedule();
-        setClasses(data);
-        if (data.length > 0) setSelectedClassId(data[0].id.toString());
+        setClasses(data || []);
+        
+        const now = new Date();
+        const active = (data || []).filter((c: any) => new Date(c.end_time) > now);
+        if (active.length > 0) setSelectedClassId(active[0].id.toString());
       } catch (e) {
         console.error(e);
       }
@@ -38,26 +41,35 @@ export default function TeacherQRPage() {
   };
 
   const qrData = sessionData ? JSON.stringify({
-    v: 1, type: 'ATTENDANCE',
-    session: sessionData.id,
-    token: sessionData.qr_code_secret,
+    type: 'ATTENDANCE',
+    session: parseInt(selectedClassId),
+    token: sessionData.secret_token,
   }) : '';
 
+  const now = new Date();
+  const activeClasses = classes.filter(c => new Date(c.end_time) > now);
+  const previousClasses = classes.filter(c => new Date(c.end_time) <= now);
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Generate Attendance QR Code</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!sessionData ? (
-            <div className="space-y-4">
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-12">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Attendance QR</h1>
+        <p className="text-gray-500 mt-1">Generate dynamic QR codes for live attendance tracking.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>1. Select Active Class</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Active Class</label>
-                {classes.length === 0 ? (
+                <label className="block text-sm font-medium text-gray-700 mb-2">Upcoming & Active Classes</label>
+                {activeClasses.length === 0 ? (
                   <EmptyState 
-                    title="No Classes Available" 
-                    description="You have no classes scheduled. Classes will appear here when they are assigned to you." 
+                    title="No Active Classes" 
+                    description="You have no upcoming or active classes right now." 
                     icon={<AlertCircle size={24} />} 
                   />
                 ) : (
@@ -67,7 +79,7 @@ export default function TeacherQRPage() {
                     className="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   >
                     <option value="" disabled>Select a class...</option>
-                    {classes.map(c => (
+                    {activeClasses.map(c => (
                       <option key={c.id} value={c.id.toString()}>
                         {c.subject_name || 'Unknown Subject'} | Room {c.room} | {new Date(c.start_time).toLocaleString()}
                       </option>
@@ -84,42 +96,83 @@ export default function TeacherQRPage() {
               
               <Button 
                 onClick={handleGenerate} 
-                disabled={classes.length === 0 || !selectedClassId}
-                className="w-full"
-                icon={<QrCode size={18} />}
+                disabled={!selectedClassId || activeClasses.length === 0} 
+                className="w-full bg-[#09090B] text-white hover:bg-[#27272A]"
               >
-                Start Attendance Session
+                Generate QR Code
               </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center p-8 bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-2xl">
-              <div className="bg-white p-6 rounded-2xl shadow-sm mb-6 border border-gray-100">
-                <QRCodeSVG 
-                  value={qrData} 
-                  size={280} 
-                  level="H" 
-                  includeMargin={true}
-                />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Session #{sessionData.id} Active</h3>
-              <p className="text-center text-gray-500 mb-6">
-                Have students scan this QR code with their ResoSync Mobile App<br/>
-                to mark their attendance.
-              </p>
-              <Button variant="danger" onClick={async () => {
-                try {
-                  await closeAttendanceSession(sessionData.id);
-                } catch(e) {
-                  console.error(e);
-                }
-                setSessionData(null);
-              }}>
-                End Session
-              </Button>
-            </div>
+            </CardContent>
+          </Card>
+
+          {previousClasses.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Previous Classes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {previousClasses.map(c => (
+                    <div key={c.id} className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                      <div className="font-semibold text-gray-900">{c.subject_name || 'Unknown Subject'}</div>
+                      <div className="text-gray-500">Ended at: {new Date(c.end_time).toLocaleString()}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+        </div>
+
+        <div>
+          <Card className="h-full border-2 border-dashed border-gray-200 bg-gray-50/50">
+            <CardContent className="flex flex-col items-center justify-center p-8 h-full min-h-[400px]">
+              {sessionData ? (
+                <div className="text-center space-y-6 animate-fade-in scale-in">
+                  <div className="inline-flex items-center justify-center p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <QRCodeSVG 
+                      value={qrData} 
+                      size={240}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="inline-flex items-center gap-2 text-green-600 font-medium">
+                      <CheckCircle size={20} />
+                      Session Active
+                    </div>
+                    <p className="text-sm text-gray-500 max-w-[250px] mx-auto">
+                      Ask students to scan this QR code using the CampusOS mobile app.
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      setSessionData(null);
+                      setSelectedClassId('');
+                    }}
+                  >
+                    Close Session
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center space-y-4 opacity-60">
+                  <div className="w-20 h-20 bg-gray-200 rounded-2xl mx-auto flex items-center justify-center">
+                    <QrCode size={32} className="text-gray-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-medium text-gray-900">No Active Session</h3>
+                    <p className="text-sm text-gray-500 max-w-[200px] mx-auto">
+                      Select a class and generate a code to start taking attendance.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
