@@ -213,4 +213,14 @@ def get_my_schedule(db: SessionDep, current_user: CurrentUser):
     else:
         return []
 
-    return [_resolve_session(s) for s in sessions]
+    # Filter to next 7 days
+    now = datetime.datetime.utcnow()
+    next_week = now + datetime.timedelta(days=7)
+    
+    filtered_sessions = [
+        s for s in sessions 
+        if s.start_time >= now.replace(hour=0, minute=0, second=0) 
+        and s.start_time <= next_week
+    ]
+
+    return [_resolve_session(s) for s in filtered_sessions]

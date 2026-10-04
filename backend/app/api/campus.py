@@ -146,3 +146,19 @@ def book_resource(booking: BookingCreate, db: SessionDep, current_user: CurrentU
 @router.get("/my-bookings", response_model=List[BookingResponse])
 def get_my_bookings(db: SessionDep, current_user: CurrentUser):
     return db.query(Booking).filter(Booking.user_id == current_user.id).order_by(Booking.start_time.asc()).all()
+
+@router.get("/bookings", response_model=List[BookingResponse])
+def get_all_bookings(db: SessionDep, current_user=Depends(get_current_active_admin)):
+    return db.query(Booking).order_by(Booking.start_time.desc()).all()
+
+@router.put("/bookings/{booking_id}/status", response_model=BookingResponse)
+def update_booking_status(booking_id: int, status: str, db: SessionDep, current_user=Depends(get_current_active_admin)):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    if status not in ["APPROVED", "REJECTED"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    booking.status = status
+    db.commit()
+    db.refresh(booking)
+    return booking

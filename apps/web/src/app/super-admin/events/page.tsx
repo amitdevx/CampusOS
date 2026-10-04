@@ -13,11 +13,11 @@ export default function SuperAdminEventsPage() {
   }, []);
 
   const now = new Date();
-  const upcoming = events.filter(e => new Date(e.start_date || e.date || e.created_at) >= now);
-  const past = events.filter(e => new Date(e.start_date || e.date || e.created_at) < now);
+  const upcoming = events.filter(e => new Date(e.event_date) >= now);
+  const past = events.filter(e => new Date(e.event_date) < now);
 
   function EventCard({ event }: { event: any }) {
-    const isPast = new Date(event.start_date || event.date || event.created_at) < now;
+    const isPast = new Date(event.event_date) < now;
     return (
       <div className="px-6 py-4 flex items-start justify-between hover:bg-gray-50 transition">
         <div className="flex items-start gap-4">

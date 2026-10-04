@@ -25,7 +25,7 @@ const Stack = createNativeStackNavigator();
 
 export const navigationRef = createNavigationContainerRef<any>();
 
-export async function logout() {
+export async function logout(setAppState?: any, setInitialRoute?: any) {
   await SecureStore.deleteItemAsync('userToken');
   await SecureStore.deleteItemAsync('userRole');
   setAuthToken(null);
@@ -34,6 +34,9 @@ export async function logout() {
       index: 0,
       routes: [{ name: 'Login' }],
     });
+  } else if (setAppState && setInitialRoute) {
+    setInitialRoute('Login');
+    setAppState('READY');
   }
 }
 
@@ -197,7 +200,7 @@ export default function App() {
         <TouchableOpacity style={styles.retryBtn} onPress={restoreSession}>
           <Text style={styles.retryBtnText}>Retry Connection</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.retryBtn, {backgroundColor: 'transparent', borderWidth: 1, borderColor: '#E4E4E7', marginTop: 12}]} onPress={logout}>
+        <TouchableOpacity style={[styles.retryBtn, {backgroundColor: 'transparent', borderWidth: 1, borderColor: '#E4E4E7', marginTop: 12}]} onPress={() => logout(setAppState, setInitialRoute)}>
           <Text style={[styles.retryBtnText, {color: '#09090B'}]}>Go to Login</Text>
         </TouchableOpacity>
       </View>

@@ -12,6 +12,8 @@ export default function AdminResourcesPage() {
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('ROOM');
 
+  const [bookings, setBookings] = useState<any[]>([]);
+
   useEffect(() => {
     load();
   }, []);
@@ -19,14 +21,29 @@ export default function AdminResourcesPage() {
   async function load() {
     setLoading(true);
     try {
-      const data = await getResources();
-      setResources(data);
+      const { getAllBookings } = await import('@campusos/api-client');
+      const [data, bookingsData] = await Promise.all([
+        getResources(),
+        getAllBookings()
+      ]);
+      setResources(data || []);
+      setBookings(bookingsData || []);
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
   }
+
+  const handleUpdateBooking = async (id: number, status: string) => {
+    try {
+      const { updateBookingStatus } = await import('@campusos/api-client');
+      await updateBookingStatus(id, status);
+      load();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,6 +137,43 @@ export default function AdminResourcesPage() {
                     {r.type}
                   </span>
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-12">
+        <h3 className="text-xl font-bold tracking-tight text-[#09090B] mb-4">Pending Requests</h3>
+        {loading ? (
+          <div className="text-center p-8 border border-dashed border-[#D4D4D8] rounded-xl bg-[#FAFAFA]">
+            <p className="text-sm font-medium text-[#A1A1AA]">Retrieving requests...</p>
+          </div>
+        ) : bookings.length === 0 ? (
+          <div className="text-center p-8 border border-dashed border-[#D4D4D8] rounded-xl bg-[#FAFAFA]">
+            <p className="text-sm font-medium text-[#A1A1AA]">No pending requests.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-[#E4E4E7] border border-[#E4E4E7] rounded-xl overflow-hidden bg-white">
+            {bookings.map(b => (
+              <div key={b.id} className="p-4 hover:bg-[#FAFAFA] transition-colors flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-bold text-[#09090B]">{b.resource?.name || 'Resource'}</p>
+                  <p className="text-xs text-[#71717A] mt-1">
+                    {new Date(b.start_time).toLocaleString()} - {new Date(b.end_time).toLocaleTimeString()}
+                  </p>
+                  <p className="text-xs text-[#52525B] font-medium mt-1">Requested by: {b.user?.full_name || 'User'}</p>
+                </div>
+                {b.status === 'PENDING' ? (
+                  <div className="flex gap-2">
+                    <button onClick={() => handleUpdateBooking(b.id, 'APPROVED')} className="px-3 py-1 bg-[#10B981] text-white text-xs font-bold uppercase rounded hover:bg-[#059669]">Approve</button>
+                    <button onClick={() => handleUpdateBooking(b.id, 'REJECTED')} className="px-3 py-1 bg-[#EF4444] text-white text-xs font-bold uppercase rounded hover:bg-[#DC2626]">Reject</button>
+                  </div>
+                ) : (
+                  <span className={`inline-flex px-2 py-1 text-xs font-bold uppercase rounded border ${b.status === 'APPROVED' ? 'bg-[#D1FAE5] text-[#065F46] border-[#A7F3D0]' : 'bg-[#FEE2E2] text-[#991B1B] border-[#FECACA]'}`}>
+                    {b.status}
+                  </span>
+                )}
               </div>
             ))}
           </div>

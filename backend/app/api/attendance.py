@@ -27,6 +27,7 @@ async def start_attendance_session(session: AttendanceSessionCreate, db: Session
     if current_user.role == "TEACHER" and class_session.teacher_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to start attendance for another teacher's class")
     
+    now = datetime.datetime.utcnow()
 
     # Close any currently active sessions for this class
     active_sessions = db.query(AttendanceSession).filter(

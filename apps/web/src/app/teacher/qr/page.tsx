@@ -12,6 +12,8 @@ export default function TeacherQRPage() {
   const [sessionData, setSessionData] = useState<any>(null);
   const [error, setError] = useState('');
   
+  const [records, setRecords] = useState<any[]>([]);
+
   useEffect(() => {
     async function load() {
       try {
@@ -19,7 +21,6 @@ export default function TeacherQRPage() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
-        // Only today's classes
         const todaysClasses = (data || []).filter((c: any) => {
           const d = new Date(c.start_time);
           return d.setHours(0,0,0,0) === today.getTime();
@@ -34,12 +35,29 @@ export default function TeacherQRPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    let interval: any;
+    if (sessionData && selectedClassId) {
+      const fetchRecords = async () => {
+        try {
+          const { apiClient } = require('@campusos/api-client');
+          const res = await apiClient.get(`/api/v1/attendance/sessions/${selectedClassId}/records`);
+          setRecords(res.data || []);
+        } catch(e) {}
+      };
+      interval = setInterval(fetchRecords, 3000);
+      fetchRecords(); // Initial fetch
+    }
+    return () => clearInterval(interval);
+  }, [sessionData, selectedClassId]);
+
   const handleGenerate = async () => {
     if (!selectedClassId) return;
     setError('');
     try {
       const response = await startAttendanceSession(parseInt(selectedClassId));
       setSessionData(response);
+      setRecords([]); // Reset
     } catch (e: any) {
       const msg = e?.response?.data?.detail || 'Failed to start attendance session.';
       setError(msg);
@@ -125,10 +143,27 @@ export default function TeacherQRPage() {
                       <CheckCircle size={20} />
                       Session Active
                     </div>
-                    <p className="text-sm text-gray-500 max-w-[250px] mx-auto">
-                      Ask students to scan this QR code using the CampusOS mobile app.
-                    </p>
                   </div>
+                  
+                  <div className="mt-6 text-left bg-white p-4 rounded-xl shadow-sm border border-gray-100 max-h-48 overflow-y-auto w-full">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-semibold text-gray-900 text-sm">Live Roster</h4>
+                      <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-700">{records.length} Scanned</span>
+                    </div>
+                    {records.length === 0 ? (
+                      <p className="text-xs text-gray-500 text-center py-2">Waiting for students to scan...</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {records.map((r: any, idx: number) => (
+                          <li key={idx} className="flex justify-between items-center text-xs border-b border-gray-50 pb-2">
+                            <span className="font-medium text-gray-900">{r.student?.full_name || 'Student'}</span>
+                            <span className="text-gray-400">{new Date(r.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
                   <Button 
                     variant="outline" 
                     className="w-full"

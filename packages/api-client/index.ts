@@ -260,3 +260,13 @@ export const updateUserRole = async (userId: number, role: string) => {
   const response = await apiClient.put(`/api/v1/users/${userId}/role`, { role });
   return response.data;
 };
+
+export const getAllBookings = async () => {
+  const response = await apiClient.get('/api/v1/campus/bookings');
+  return response.data;
+};
+
+export const updateBookingStatus = async (bookingId: number, status: string) => {
+  const response = await apiClient.put(`/api/v1/campus/bookings/${bookingId}/status?status=${status}`);
+  return response.data;
+};

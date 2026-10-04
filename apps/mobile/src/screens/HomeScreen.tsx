@@ -32,7 +32,16 @@ export default function HomeScreen({ navigation }: any) {
           getMySchedule(),
         ]);
         setUser(userData);
-        setSchedule(scheduleData || []);
+        
+        // Filter schedule strictly to TODAY
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const todaysClasses = (scheduleData || []).filter((s: any) => {
+          if (!s.start_time) return false;
+          return s.start_time.startsWith(todayStr);
+        }).sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+        
+        setSchedule(todaysClasses);
       } catch {
       } finally {
         setLoading(false);

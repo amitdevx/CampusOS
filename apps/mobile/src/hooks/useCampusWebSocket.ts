@@ -35,11 +35,24 @@ export function useCampusWebSocket() {
       
       ws = new WebSocket(`${WS_URL}/ws/${user.id}`);
       
-      ws.onmessage = (event) => {
+      ws.onmessage = async (event) => {
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'notification' || data.type === 'echo') {
-            setNotifications(prev => [data.payload || data.data, ...prev]);
+            const notifData = data.payload || data.data;
+            setNotifications(prev => [notifData, ...prev]);
+            
+            // Trigger native Android/iOS notification
+            const Notifications = await import('expo-notifications');
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: notifData.title || 'ResoSync Alert',
+                body: notifData.message || 'You have a new campus notification.',
+                sound: true,
+                priority: Notifications.AndroidNotificationPriority.HIGH,
+              },
+              trigger: null, // Fire immediately
+            });
           }
         } catch (e) {
           console.error('WS parse error', e);

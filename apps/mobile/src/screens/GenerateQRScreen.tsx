@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { Screen } from '../components/Screen';
-import { getMySchedule, startAttendanceSession, closeAttendanceSession } from '@campusos/api-client';
+import { getMySchedule, startAttendanceSession, closeAttendanceSession, getAttendanceRecords } from '@campusos/api-client';
 import { Clock, MapPin, CheckCircle, X } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { EmptyState, ErrorState } from '../components/States';
@@ -27,6 +27,7 @@ export default function GenerateQRScreen() {
   const [closing, setClosing] = useState(false);
   const [fetchError, setFetchError] = useState(false);
   const [genState, setGenState] = useState<GenState>('idle');
+  const [records, setRecords] = useState<any[]>([]);
 
   useEffect(() => {
     getMySchedule()
@@ -44,6 +45,21 @@ export default function GenerateQRScreen() {
       .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    let interval: any;
+    if (genState === 'active' && sessionData?.id) {
+      const fetchRecords = async () => {
+        try {
+          const data = await getAttendanceRecords(sessionData.id);
+          setRecords(data || []);
+        } catch (e) {}
+      };
+      interval = setInterval(fetchRecords, 3000);
+      fetchRecords();
+    }
+    return () => clearInterval(interval);
+  }, [genState, sessionData]);
 
   const handleGenerate = async () => {
     if (!selectedClass) return;
@@ -156,6 +172,23 @@ export default function GenerateQRScreen() {
             <Text style={styles.instructions}>
               Ask students to open the ResoSync app and scan this code.
             </Text>
+
+            <View style={{ backgroundColor: '#fff', padding: 16, borderRadius: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Text style={{ fontWeight: '700', color: colors.text }}>Live Roster</Text>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: colors.textSecondary }}>{records.length} Scanned</Text>
+              </View>
+              {records.length === 0 ? (
+                <Text style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 13, marginVertical: 8 }}>Waiting for students...</Text>
+              ) : (
+                records.map((r: any, idx: number) => (
+                  <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F4F4F5' }}>
+                    <Text style={{ fontWeight: '600', fontSize: 13, color: colors.text }}>{r.student?.full_name || 'Student'}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                  </View>
+                ))
+              )}
+            </View>
 
             <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: colors.danger }]}

@@ -22,7 +22,7 @@ export default function StudentEventsPage() {
         getEvents(),
         getMyEventRegistrations()
       ]);
-      setEvents(eventsData || []);
+      setEvents((eventsData || []).filter((e:any) => new Date(e.event_date).getTime() > Date.now()));
       setRegistrations(regsData || []);
     } catch (e) {
       console.error(e);
