@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getMySchedule, startAttendanceSession, closeAttendanceSession, getAttendanceRecords, getUsers } from '@campusos/api-client';
-import QRCode from 'react-qr-code';
+import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { Users, CheckCircle } from 'lucide-react';
 
 interface ClassSession {

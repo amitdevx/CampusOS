@@ -23,6 +23,12 @@ def login_access_token(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect email or password"
         )
+        
+    if user.role == "DEACTIVATED":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account has been deactivated."
+        )
     
     return {
         "access_token": create_access_token(user.id),

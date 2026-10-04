@@ -1,0 +1,234 @@
+import axios from 'axios';
+export const apiClient = axios.create({
+    baseURL: process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://campusos-api-3r6a.onrender.com',
+    timeout: 30000,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+let onUnauthorizedCallback = null;
+export const setUnauthorizedCallback = (cb) => {
+    onUnauthorizedCallback = cb;
+};
+apiClient.interceptors.response.use((response) => response, (error) => {
+    // 401 Unauthorized means the token is missing, invalid, or expired.
+    if (error.response && error.response.status === 401) {
+        if (onUnauthorizedCallback) {
+            onUnauthorizedCallback();
+        }
+    }
+    return Promise.reject(error);
+});
+export const healthCheck = async () => {
+    const response = await apiClient.get('/health');
+    return response.data;
+};
+// Auth API
+export const setAuthToken = (token) => {
+    if (token) {
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    else {
+        delete apiClient.defaults.headers.common['Authorization'];
+    }
+};
+export const login = async (username, password) => {
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+    const response = await apiClient.post('/api/v1/auth/login', formData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    return response.data;
+};
+export const getMe = async () => {
+    const response = await apiClient.get('/api/v1/auth/me');
+    return response.data;
+};
+export const getUsers = async () => {
+    const response = await apiClient.get('/api/v1/auth/users');
+    return response.data;
+};
+// Timetable API
+export const getMySchedule = async () => {
+    const response = await apiClient.get('/api/v1/timetable/my-schedule');
+    return response.data;
+};
+export const getClasses = async () => {
+    const response = await apiClient.get('/api/v1/timetable/');
+    return response.data;
+};
+export const createClass = async (data) => {
+    const response = await apiClient.post('/api/v1/timetable/', data);
+    return response.data;
+};
+export const deleteClass = async (sessionId) => {
+    await apiClient.delete(`/api/v1/timetable/${sessionId}`);
+};
+// Events API
+export const getEvents = async () => {
+    const response = await apiClient.get('/api/v1/campus/events');
+    return response.data;
+};
+export const createEvent = async (data) => {
+    const response = await apiClient.post('/api/v1/campus/events', data);
+    return response.data;
+};
+// Attendance API
+export const startAttendanceSession = async (class_session_id) => {
+    const response = await apiClient.post('/api/v1/attendance/sessions', { class_session_id });
+    return response.data;
+};
+export const markAttendance = async (session_id, qr_code_secret) => {
+    const response = await apiClient.post(`/api/v1/attendance/sessions/${session_id}/scan`, { qr_code_secret });
+    return response.data;
+};
+// Intelligence API
+export const getAnalytics = async () => {
+    const response = await apiClient.get('/api/v1/intelligence/analytics');
+    return response.data;
+};
+// Evaluations API
+export const getAssignments = async () => {
+    const response = await apiClient.get('/api/v1/evaluations/assignments');
+    return response.data;
+};
+export const getExams = async () => {
+    const response = await apiClient.get('/api/v1/evaluations/exams');
+    return response.data;
+};
+export const createAssignment = async (data) => {
+    const response = await apiClient.post('/api/v1/evaluations/assignments', data);
+    return response.data;
+};
+export const createExam = async (data) => {
+    const response = await apiClient.post('/api/v1/evaluations/exams', data);
+    return response.data;
+};
+export const submitAssignment = async (assignment_id, data) => {
+    const response = await apiClient.post(`/api/v1/evaluations/assignments/${assignment_id}/submit`, data);
+    return response.data;
+};
+export const gradeSubmission = async (assignment_id, submission_id, data) => {
+    const response = await apiClient.post(`/api/v1/evaluations/assignments/${assignment_id}/submissions/${submission_id}/grade`, data);
+    return response.data;
+};
+export const postExamMarks = async (exam_id, marks) => {
+    const response = await apiClient.post(`/api/v1/evaluations/exams/${exam_id}/marks`, marks);
+    return response.data;
+};
+export const closeAttendanceSession = async (sessionId) => {
+    const response = await apiClient.post(`/api/v1/attendance/sessions/${sessionId}/close`);
+    return response.data;
+};
+export const getResources = async () => {
+    const response = await apiClient.get('/api/v1/campus/resources');
+    return response.data;
+};
+export const bookResource = async (resourceId, startTime, endTime) => {
+    const response = await apiClient.post('/api/v1/campus/bookings', {
+        resource_id: resourceId,
+        start_time: startTime,
+        end_time: endTime
+    });
+    return response.data;
+};
+export const getMyBookings = async () => {
+    const response = await apiClient.get('/api/v1/campus/my-bookings');
+    return response.data;
+};
+export const updatePushToken = async (token) => {
+    const response = await apiClient.post('/api/v1/users/push-token', { push_token: token });
+    return response.data;
+};
+export const getAuditLogs = async () => {
+    const response = await apiClient.get('/api/v1/engineering/audit-logs');
+    return response.data;
+};
+export const createUser = async (data) => {
+    const response = await apiClient.post('/api/v1/auth/register', data);
+    return response.data;
+};
+export const createResource = async (data) => {
+    const response = await apiClient.post('/api/v1/campus/resources', data);
+    return response.data;
+};
+export const deleteResource = async (resourceId) => {
+    await apiClient.delete(`/api/v1/campus/resources/${resourceId}`);
+};
+// Notices API
+export const getNotices = async () => {
+    const response = await apiClient.get('/api/v1/campus/notices');
+    return response.data;
+};
+export const createNotice = async (data) => {
+    const response = await apiClient.post('/api/v1/campus/notices', data);
+    return response.data;
+};
+// Academic API
+export const getDepartments = async () => {
+    const response = await apiClient.get('/api/v1/academic/departments');
+    return response.data;
+};
+export const getCourses = async () => {
+    const response = await apiClient.get('/api/v1/academic/courses');
+    return response.data;
+};
+export const getSubjects = async () => {
+    const response = await apiClient.get('/api/v1/academic/subjects');
+    return response.data;
+};
+export const getBatches = async () => {
+    const response = await apiClient.get('/api/v1/academic/batches');
+    return response.data;
+};
+export const getDivisions = async () => {
+    const response = await apiClient.get('/api/v1/academic/divisions');
+    return response.data;
+};
+export const getEnrollments = async () => {
+    const response = await apiClient.get('/api/v1/academic/enrollments');
+    return response.data;
+};
+// Notifications API
+export const getNotifications = async () => {
+    const response = await apiClient.get('/api/v1/notifications/');
+    return response.data;
+};
+export const markNotificationRead = async (id) => {
+    const response = await apiClient.put(`/api/v1/notifications/${id}/read`);
+    return response.data;
+};
+export const getAttendanceRecords = async (session_id) => {
+    const response = await apiClient.get(`/api/v1/attendance/sessions/${session_id}/records`);
+    return response.data;
+};
+export const registerForEvent = async (eventId) => {
+    const response = await apiClient.post(`/api/v1/campus/events/register`, { event_id: eventId });
+    return response.data;
+};
+export const getMyEventRegistrations = async () => {
+    const response = await apiClient.get('/api/v1/campus/events/my-registrations');
+    return response.data;
+};
+// Super Admin exclusive functions
+export const deleteUser = async (userId) => {
+    const response = await apiClient.delete(`/api/v1/users/${userId}`);
+    return response.data;
+};
+export const createDepartment = async (data) => {
+    const response = await apiClient.post('/api/v1/academic/departments', data);
+    return response.data;
+};
+export const updateUserRole = async (userId, role) => {
+    const response = await apiClient.put(`/api/v1/users/${userId}/role`, { role });
+    return response.data;
+};
+export const getAllBookings = async () => {
+    const response = await apiClient.get('/api/v1/campus/bookings');
+    return response.data;
+};
+export const updateBookingStatus = async (bookingId, status) => {
+    const response = await apiClient.put(`/api/v1/campus/bookings/${bookingId}/status?status=${status}`);
+    return response.data;
+};

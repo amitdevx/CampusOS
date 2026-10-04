@@ -8,6 +8,25 @@ export const apiClient = axios.create({
   },
 });
 
+let onUnauthorizedCallback: (() => void) | null = null;
+
+export const setUnauthorizedCallback = (cb: () => void) => {
+  onUnauthorizedCallback = cb;
+};
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // 401 Unauthorized means the token is missing, invalid, or expired.
+    if (error.response && error.response.status === 401) {
+      if (onUnauthorizedCallback) {
+        onUnauthorizedCallback();
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const healthCheck = async () => {
   const response = await apiClient.get('/health');
   return response.data;
@@ -152,7 +171,7 @@ export const getMyBookings = async () => {
   return response.data;
 };
 
-export const updatePushToken = async (token: string) => {
+export const updatePushToken = async (token: string | null) => {
   const response = await apiClient.post('/api/v1/users/push-token', { push_token: token });
   return response.data;
 };

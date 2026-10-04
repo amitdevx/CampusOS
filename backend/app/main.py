@@ -38,7 +38,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://campus-os-web-wgiw.vercel.app",
-        "https://campus-os-chi-eight.vercel.app"
+        "https://campus-os-chi-eight.vercel.app",
+        "https://campus-os.vercel.app",
+        "https://resosync.amitdevx.tech",
+        "http://resosync.amitdevx.tech"
     ],
     allow_origin_regex=r"https://campus-os-.*\.vercel\.app",
     allow_credentials=True,

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAuthToken } from '@campusos/api-client';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
-import { LayoutDashboard, Clock, QrCode, FileText, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Clock, QrCode, FileText, CheckSquare, MapPin } from 'lucide-react';
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -42,6 +42,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     { name: 'Attendance QR', path: '/teacher/qr', icon: <QrCode size={20} /> },
     { name: 'Assignments', path: '/teacher/assignments', icon: <FileText size={20} /> },
     { name: 'Marks', path: '/teacher/marks', icon: <CheckSquare size={20} /> },
+    { name: 'Resources', path: '/teacher/resources', icon: <MapPin size={20} /> },
   ];
 
   return (

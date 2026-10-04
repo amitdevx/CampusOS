@@ -6,7 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Home, BookOpen, Calendar, Scan, User, MapPin } from 'lucide-react-native';
 import * as SecureStore from "expo-secure-store";
-import { setAuthToken, getMe, updatePushToken } from "@campusos/api-client";
+import { setAuthToken, getMe, updatePushToken, setUnauthorizedCallback } from "@campusos/api-client";
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { colors } from './theme/colors';
@@ -19,15 +19,30 @@ import ScanScreen from './screens/ScanScreen';
 import GenerateQRScreen from './screens/GenerateQRScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ResourcesScreen from './screens/ResourcesScreen';
+import AdminHomeScreen from './screens/AdminHomeScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 export const navigationRef = createNavigationContainerRef<any>();
 
+let isLoggingOut = false;
+
 export async function logout(setAppState?: any, setInitialRoute?: any) {
+  if (isLoggingOut) return;
+  isLoggingOut = true;
+  try {
+    // Attempt to invalidate push token on the server so the device stops receiving notifications.
+    // Wrap in try-catch so offline/failed requests do not block the local logout.
+    await updatePushToken(null);
+  } catch (error) {
+    console.warn("Failed to invalidate push token on server during logout", error);
+  }
+
   await SecureStore.deleteItemAsync('userToken');
   await SecureStore.deleteItemAsync('userRole');
+  await SecureStore.deleteItemAsync('offline_user');
+  await SecureStore.deleteItemAsync('offline_schedule');
   setAuthToken(null);
   if (navigationRef.isReady()) {
     navigationRef.reset({
@@ -38,6 +53,7 @@ export async function logout(setAppState?: any, setInitialRoute?: any) {
     setInitialRoute('Login');
     setAppState('READY');
   }
+  isLoggingOut = false;
 }
 
 function StudentNavigator() {
@@ -47,7 +63,6 @@ function StudentNavigator() {
       <Tab.Screen name="Classes" component={ClassesScreen} />
       <Tab.Screen name="Scan QR" component={ScanScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
-      <Tab.Screen name="Resources" component={ResourcesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -60,7 +75,6 @@ function TeacherNavigator() {
       <Tab.Screen name="Classes" component={ClassesScreen} />
       <Tab.Screen name="Generate QR" component={GenerateQRScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
-      <Tab.Screen name="Resources" component={ResourcesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -81,9 +95,7 @@ function FacultyNavigator() {
 function AdminNavigator() {
   return (
     <Tab.Navigator screenOptions={tabOptions('#374151')}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Classes" component={ClassesScreen} />
-      <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Home" component={AdminHomeScreen} />
       <Tab.Screen name="Resources" component={ResourcesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -93,9 +105,7 @@ function AdminNavigator() {
 function SuperAdminNavigator() {
   return (
     <Tab.Navigator screenOptions={tabOptions('#09090B')}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Classes" component={ClassesScreen} />
-      <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Home" component={AdminHomeScreen} />
       <Tab.Screen name="Resources" component={ResourcesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -134,44 +144,54 @@ export default function App() {
   
   const { expoPushToken } = usePushNotifications();
 
+  useEffect(() => {
+    setUnauthorizedCallback(() => {
+      logout(setAppState, setInitialRoute);
+    });
+  }, []);
+
   const restoreSession = useCallback(async () => {
     setAppState('LOADING');
     try {
       const token = await SecureStore.getItemAsync('userToken');
+      const cachedRole = await SecureStore.getItemAsync('userRole');
+      
       if (!token) {
         setInitialRoute('Login');
         setAppState('READY');
         return;
       }
       
+      // We have a token. Immediately mount the app using cached role to avoid blocking on network!
       setAuthToken(token);
+      setInitialRole(cachedRole || 'STUDENT');
+      setInitialRoute('Main');
+      setAppState('READY');
       
-      try {
-        const user = await getMe();
-        await SecureStore.setItemAsync('userRole', user.role);
-        setInitialRole(user.role);
-        setInitialRoute('Main');
-        setAppState('READY');
-      } catch (err: any) {
-        console.error("Token validation failed on launch", err);
-        // If 401 or 403, token is dead. Delete it.
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          await SecureStore.deleteItemAsync('userToken');
-          await SecureStore.deleteItemAsync('userRole');
-          setAuthToken(null);
-          setInitialRoute('Login');
-          setAppState('READY');
-        } else {
-          // It's a network error or server asleep
-          setErrorMsg('Cannot connect to the ResoSync server. It might be waking up or offline.');
-          setAppState('ERROR');
-        }
-      }
+      // Now validate asynchronously in the background
+      validateSessionBackground();
     } catch (e) {
       console.error("Session restore error", e);
+      setInitialRoute('Login');
       setAppState('READY');
     }
   }, []);
+  
+  const validateSessionBackground = async () => {
+    try {
+      const user = await getMe();
+      // If role changed, update cache. We don't force a reload to avoid jarring the user, 
+      // but next launch will use the new role.
+      await SecureStore.setItemAsync('userRole', user.role);
+    } catch (err: any) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        console.error("Background validation: Token invalid or expired. Forcing logout.");
+        logout(setAppState, setInitialRoute);
+      } else {
+        console.log("Background validation: Server offline or waking up. Continuing with cached session.");
+      }
+    }
+  };
 
   useEffect(() => {
     restoreSession();
@@ -213,6 +233,7 @@ export default function App() {
         <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Main" component={MainNavigator} initialParams={{ role: initialRole }} />
+          <Stack.Screen name="Resources" component={ResourcesScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="dark" />

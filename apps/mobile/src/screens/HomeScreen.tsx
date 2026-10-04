@@ -8,12 +8,14 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { getMe, getMySchedule } from '@campusos/api-client';
 import { Bell, MapPin, QrCode } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { colors } from '../theme/colors';
 import { useCampusWebSocket } from '../hooks/useCampusWebSocket';
+import * as SecureStore from 'expo-secure-store';
 
 const { width } = Dimensions.get('window');
 
@@ -24,31 +26,57 @@ export default function HomeScreen({ navigation }: any) {
   const [showNotifs, setShowNotifs] = useState(false);
   const { notifications } = useCampusWebSocket();
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [userData, scheduleData] = await Promise.all([
-          getMe(),
-          getMySchedule(),
-        ]);
-        setUser(userData);
-        
-        // Filter schedule strictly to TODAY
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        const todaysClasses = (scheduleData || []).filter((s: any) => {
-          if (!s.start_time) return false;
-          return s.start_time.startsWith(todayStr);
-        }).sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-        
-        setSchedule(todaysClasses);
-      } catch {
-      } finally {
-        setLoading(false);
+  const [isOffline, setIsOffline] = useState(false);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = async (isRefresh = false) => {
+    try {
+      if (!isRefresh) {
+        // Try loading cache first for instant UI
+        const cachedUser = await SecureStore.getItemAsync('offline_user');
+        const cachedSchedule = await SecureStore.getItemAsync('offline_schedule');
+        if (cachedUser) setUser(JSON.parse(cachedUser));
+        if (cachedSchedule) setSchedule(JSON.parse(cachedSchedule));
+        if (cachedUser || cachedSchedule) setLoading(false);
       }
+
+      const [userData, scheduleData] = await Promise.all([
+        getMe(),
+        getMySchedule(),
+      ]);
+      
+      setUser(userData);
+      await SecureStore.setItemAsync('offline_user', JSON.stringify(userData));
+      
+      // Filter schedule strictly to TODAY
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const todaysClasses = (scheduleData || []).filter((s: any) => {
+        if (!s.start_time) return false;
+        return s.start_time.startsWith(todayStr);
+      }).sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+      
+      setSchedule(todaysClasses);
+      await SecureStore.setItemAsync('offline_schedule', JSON.stringify(todaysClasses));
+      setIsOffline(false);
+    } catch (err) {
+      console.log("HomeScreen network error, falling back to cache");
+      setIsOffline(true);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData(true);
+  };
 
   if (loading) {
     return (
@@ -62,7 +90,11 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <Screen style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         <View style={styles.headerRow}>
           <Text style={styles.brandText}>ResoSync</Text>
           <TouchableOpacity style={styles.iconButton} activeOpacity={0.7} onPress={() => setShowNotifs(true)}>
@@ -70,6 +102,14 @@ export default function HomeScreen({ navigation }: any) {
             {notifications.length > 0 && <View style={styles.badge} />}
           </TouchableOpacity>
         </View>
+
+        {isOffline && (
+          <View style={{ backgroundColor: '#FEF3C7', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <Text style={{ color: '#92400E', fontSize: 13, fontWeight: '500', textAlign: 'center' }}>
+              You are offline. Showing cached data.
+            </Text>
+          </View>
+        )}
 
         {/* THE DIGITAL ID PASS */}
         <View style={styles.idCard}>
@@ -86,18 +126,34 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={styles.idEmail}>{user?.email || 'guest@campus.edu'}</Text>
             </View>
 
-            <TouchableOpacity 
-              style={styles.passButton}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate(isStudent ? 'Scan QR' : 'Generate QR')}
-            >
-              <QrCode size={18} color="#FFFFFF" />
-              <Text style={styles.passButtonText}>
-                {isStudent ? 'Scan Campus Pass' : 'Generate Session Pass'}
-              </Text>
-            </TouchableOpacity>
+            {(user?.role === 'STUDENT' || user?.role === 'TEACHER') && (
+              <TouchableOpacity 
+                style={styles.passButton}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate(user?.role === 'STUDENT' ? 'Scan QR' : 'Generate QR')}
+              >
+                <QrCode size={18} color="#FFFFFF" />
+                <Text style={styles.passButtonText}>
+                  {user?.role === 'STUDENT' ? 'Scan Campus Pass' : 'Generate Session Pass'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
+
+        {/* QUICK ACTIONS */}
+        {(user?.role === 'STUDENT' || user?.role === 'TEACHER') && (
+          <View style={{ marginBottom: 24, paddingHorizontal: 20 }}>
+            <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#F4F4F5', padding: 16, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E4E4E7' }}
+              onPress={() => navigation.navigate('Resources')}
+            >
+              <MapPin size={20} color="#09090B" />
+              <Text style={{ fontWeight: '600', fontSize: 15, color: '#09090B' }}>Book Campus Resource</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* TIMELINE */}
         <View style={styles.timelineSection}>

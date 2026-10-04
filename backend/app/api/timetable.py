@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .deps import SessionDep, get_current_faculty_or_admin, CurrentUser
 from ..models.timetable import ClassSession
@@ -214,8 +214,8 @@ def get_my_schedule(db: SessionDep, current_user: CurrentUser):
         return []
 
     # Filter to next 7 days
-    now = datetime.datetime.utcnow()
-    next_week = now + datetime.timedelta(days=7)
+    now = datetime.utcnow()
+    next_week = now + timedelta(days=7)
     
     filtered_sessions = [
         s for s in sessions 

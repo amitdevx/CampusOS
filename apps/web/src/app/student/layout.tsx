@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAuthToken } from '@campusos/api-client';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
-import { LayoutDashboard, BookOpen, FileText, Calendar } from 'lucide-react';
+import { LayoutDashboard, BookOpen, FileText, Calendar, MapPin } from 'lucide-react';
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -41,6 +41,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     { name: 'My Classes', path: '/student/classes', icon: <BookOpen size={20} /> },
     { name: 'Assignments', path: '/student/assignments', icon: <FileText size={20} /> },
     { name: 'Events', path: '/student/events', icon: <Calendar size={20} /> },
+    { name: 'Resources', path: '/student/resources', icon: <MapPin size={20} /> },
   ];
 
   return (

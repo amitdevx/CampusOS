@@ -5,7 +5,7 @@ from fastapi import status
 from sqlalchemy.orm import Session
 from typing import List
 
-from .deps import SessionDep, CurrentUser
+from .deps import SessionDep, CurrentUser, get_current_active_admin
 from ..models.notifications import Notification
 from ..models.user import User
 from ..models.campus import Event, EventRegistration, Resource, Booking, Notice
@@ -158,6 +158,20 @@ def update_booking_status(booking_id: int, status: str, db: SessionDep, current_
         raise HTTPException(status_code=404, detail="Booking not found")
     if status not in ["APPROVED", "REJECTED"]:
         raise HTTPException(status_code=400, detail="Invalid status")
+        
+    if status == "APPROVED":
+        # Conflict detection before approval
+        overlapping = db.query(Booking).filter(
+            Booking.resource_id == booking.resource_id,
+            Booking.status == "APPROVED",
+            Booking.id != booking.id,
+            Booking.start_time < booking.end_time,
+            Booking.end_time > booking.start_time
+        ).first()
+        
+        if overlapping:
+            raise HTTPException(status_code=400, detail="Cannot approve: Resource is already booked during this time.")
+            
     booking.status = status
     db.commit()
     db.refresh(booking)

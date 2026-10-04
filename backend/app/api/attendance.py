@@ -23,8 +23,8 @@ async def start_attendance_session(session: AttendanceSessionCreate, db: Session
     if not class_session:
         raise HTTPException(status_code=404, detail="Class session not found")
         
-    # Security: A teacher can only start a session for their own class
-    if current_user.role == "TEACHER" and class_session.teacher_id != current_user.id:
+    # Security: A teacher or faculty can only start a session for their own class
+    if current_user.role in ["TEACHER", "FACULTY"] and class_session.teacher_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to start attendance for another teacher's class")
     
     now = datetime.datetime.utcnow()
@@ -75,7 +75,7 @@ def close_attendance_session(session_id: int, db: SessionDep, current_user=Depen
         raise HTTPException(status_code=404, detail="Session not found")
     
     class_session = db.query(ClassSession).filter(ClassSession.id == session.class_session_id).first()
-    if current_user.role == "TEACHER" and class_session.teacher_id != current_user.id:
+    if current_user.role in ["TEACHER", "FACULTY"] and class_session.teacher_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
         
     session.is_active = False
@@ -103,14 +103,16 @@ def scan_qr_attendance(session_id: int, record_in: AttendanceRecordCreate, db: S
         raise HTTPException(status_code=400, detail="Associated class session not found")
     
     # Validate Enrollment: Is the student actually in this division?
-    if class_session.division_id is not None:
-        enrollment = db.query(Enrollment).filter(
-            Enrollment.student_id == current_user.id,
-            Enrollment.division_id == class_session.division_id,
-            Enrollment.status == "ACTIVE"
-        ).first()
-        if not enrollment:
-            raise HTTPException(status_code=403, detail="You are not enrolled in this class's division")
+    if class_session.division_id is None:
+        raise HTTPException(status_code=403, detail="Class session is missing division configuration.")
+        
+    enrollment = db.query(Enrollment).filter(
+        Enrollment.student_id == current_user.id,
+        Enrollment.division_id == class_session.division_id,
+        Enrollment.status == "ACTIVE"
+    ).first()
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="You are not enrolled in this class's division")
     
     # Validate QR secret (prevent fake attendance)
     if session.qr_code_secret != record_in.qr_code_secret:
