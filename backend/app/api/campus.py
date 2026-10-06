@@ -7,6 +7,7 @@ from typing import List
 
 from .deps import SessionDep, CurrentUser, get_current_active_admin
 from ..models.notifications import Notification
+from ..core.notify import send_notification
 from ..models.user import User
 from ..models.campus import Event, EventRegistration, Resource, Booking, Notice
 from ..schemas.campus import (
@@ -60,29 +61,16 @@ def create_notice(notice: NoticeCreate, db: SessionDep, current_user: CurrentUse
     db.commit()
     db.refresh(db_notice)
     
-    # Create persistent notifications for everyone
+    # Ponytail: Use the unified notification pipeline instead of ad-hoc broadcast
     users = db.query(User).all()
-    notifs = []
-    for u in users:
-        notifs.append(Notification(user_id=u.id, title=db_notice.title, message="New Campus Notice: " + notice.content[:50], type="SYSTEM_ALERT"))
-    
-    if notifs:
-        db.bulk_save_objects(notifs)
-        db.commit()
-
-    # Broadcast to all connected clients
+    user_ids = [u.id for u in users]
     try:
         loop = asyncio.get_event_loop()
-        loop.create_task(manager.broadcast({
-            "type": "notification",
-            "payload": {
-                "title": db_notice.title,
-                "message": "New Campus Notice: " + notice.content[:50],
-                "type": "SYSTEM_ALERT"
-            }
-        }))
+        loop.create_task(send_notification(
+            db, user_ids, db_notice.title, "New Campus Notice: " + notice.content[:50], "SYSTEM_ALERT"
+        ))
     except Exception as e:
-        pass
+        print(f"Failed to push campus notice: {e}")
         
     return db_notice
 

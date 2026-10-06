@@ -1,0 +1,17 @@
+name: Backend Keepalive
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API Health
+        run: |
+          if [ -n "${{ vars.RENDER_HEALTH_URL }}" ]; then
+            curl -sSf "${{ vars.RENDER_HEALTH_URL }}/health" || echo "Health check failed but workflow will not crash"
+          else
+            echo "RENDER_HEALTH_URL is not set. Skipping ping."
+          fi

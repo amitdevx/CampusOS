@@ -28,6 +28,7 @@ export function SidebarLayout({
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const { notifications } = useCampusWebSocket();
+  const unreadCount = notifications.filter(n => !n.is_read).length;
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   
@@ -48,9 +49,14 @@ export function SidebarLayout({
   }, []);
 
   // Show toast when new notification arrives
+  const isInitialLoad = useRef(true);
   useEffect(() => {
     if (notifications.length > 0) {
-      const latest = notifications[notifications.length - 1];
+      if (isInitialLoad.current) {
+          isInitialLoad.current = false;
+          return;
+      }
+      const latest = notifications[0];
       const toastId = Date.now();
       setLatestToast({ message: latest.message, id: toastId });
       
@@ -153,19 +159,19 @@ export function SidebarLayout({
                   className="relative p-2 text-[#71717A] hover:text-[#09090B] hover:bg-[#F4F4F5] rounded-md transition-colors"
                 >
                   <Bell size={18} />
-                  {notifications.length > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EF4444] rounded-full ring-2 ring-white" />
                   )}
                 </button>
                 {notifOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E4E4E7] rounded-lg shadow-xl shadow-black/5 z-50 overflow-hidden">
-                    <div className="p-4 text-xs font-bold text-[#09090B] uppercase tracking-wider border-b border-[#E4E4E7] bg-[#FAFAFA]">System Alerts</div>
+                    <div className="p-4 text-xs font-bold text-[#09090B] uppercase tracking-wider border-b border-[#E4E4E7] bg-[#FAFAFA]">Notifications</div>
                     <div className="max-h-64 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="p-4 text-sm text-[#A1A1AA] text-center py-8">No active alerts.</div>
                       ) : (
                         notifications.map((n: any, i: number) => (
-                          <div key={i} className="p-4 text-sm border-b border-[#E4E4E7] hover:bg-[#FAFAFA] text-[#27272A]">{n.message}</div>
+                          <div key={n.id || i} className="p-4 text-sm border-b border-[#E4E4E7] hover:bg-[#FAFAFA] text-[#27272A]">{n.message}</div>
                         ))
                       )}
                     </div>

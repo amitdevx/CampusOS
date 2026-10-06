@@ -25,6 +25,7 @@ export default function HomeScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [showNotifs, setShowNotifs] = useState(false);
   const { notifications } = useCampusWebSocket();
+  const unreadCount = notifications.filter((n: any) => !n.is_read).length;
 
   const [isOffline, setIsOffline] = useState(false);
 
@@ -99,7 +100,7 @@ export default function HomeScreen({ navigation }: any) {
           <Text style={styles.brandText}>ResoSync</Text>
           <TouchableOpacity style={styles.iconButton} activeOpacity={0.7} onPress={() => setShowNotifs(true)}>
             <Bell size={20} color={colors.text} />
-            {notifications.length > 0 && <View style={styles.badge} />}
+            {unreadCount > 0 && <View style={styles.badge} />}
           </TouchableOpacity>
         </View>
 
@@ -199,7 +200,7 @@ export default function HomeScreen({ navigation }: any) {
         <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center'}}>
           <View style={{width: '85%', backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '70%'}}>
             <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16}}>
-              <Text style={{fontSize: 18, fontWeight: 'bold'}}>System Alerts</Text>
+              <Text style={{fontSize: 18, fontWeight: 'bold'}}>Notifications</Text>
               <TouchableOpacity onPress={() => setShowNotifs(false)}>
                 <Text style={{color: 'red', fontWeight: 'bold'}}>Close</Text>
               </TouchableOpacity>
@@ -209,7 +210,7 @@ export default function HomeScreen({ navigation }: any) {
                 <Text style={{color: '#888', textAlign: 'center', marginTop: 20}}>No active alerts.</Text>
               ) : (
                 notifications.map((n, i) => (
-                  <View key={i} style={{padding: 12, backgroundColor: '#f5f5f5', borderRadius: 8, marginBottom: 8}}>
+                  <View key={n.id || i} style={{padding: 12, backgroundColor: '#f5f5f5', borderRadius: 8, marginBottom: 8}}>
                     <Text style={{fontWeight: 'bold', fontSize: 14}}>{n.title || 'Notification'}</Text>
                     <Text style={{fontSize: 13, color: '#555', marginTop: 4}}>{n.message || n}</Text>
                   </View>
