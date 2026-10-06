@@ -38,3 +38,13 @@ pip-delete-this-directory.txt
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Scratch files
+*.py
+!backend/**/*.py
+*.js
+!apps/**/*.js
+!packages/**/*.js
+!*config.js
+!*config.mjs
+campusos.db

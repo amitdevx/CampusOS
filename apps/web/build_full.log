@@ -1,0 +1,14 @@
+▲ Next.js 16.3.6 (Turbopack)
+- Environments: .env
+✓ Running next.config.ts took 541ms
+
+  Creating an optimized production build ...
+
+thread 'tokio-rt-worker' (23167) panicked at turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:1329:13:
+Every task must have a task type TaskGuard { task_id: TaskId { id: 235800 }, storage: TaskStorage { leaf_distance: LeafDistance { distance: 0, max_distance_in_buffer: 0 }, aggregation_number: AggregationNumber { base: 1073741823, distance: 0, effective: 1073741823 }, output_dependent: {}, output: Some(Cell(CellRef { task: TaskId { id: 235800 }, cell: CellId { type_id: ValueTypeId { id: 245, name: ValueType { name: "turbo_tasks_fs::content::FileContent" } }, index: 0 } })), upper: CounterMap({TaskId { id: 95241 }: 2, TaskId { id: 95245 }: 1, TaskId { id: 14 }: 1}), persistent_task_type: None, flags: TaskFlags { .0: 48, optimization_pending: false, invalidator: false, immutable: false, current_session_clean: false, meta_restored: true, data_restored: true, meta_restoring: false, data_restoring: false, meta_modified: false, data_modified: false, meta_modified_during_snapshot: false, data_modified_during_snapshot: false, prefetched: false, stateful: false, new_task: false }, lazy: [Dirty(SessionDependent), Activeness(ActivenessState { active_counter: 0, root_ty: None, active_until_clean: true, all_clean_event: Event }), InProgress(Scheduled { done_event: Event, reason: ActivateDirty })] } }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+turbo-tasks: an internal panic occurred outside the per-task panic boundary. This is a bug in turbo-tasks/Turbopack — please report it at https://github.com/vercel/next.js/discussions and include the panic message and stack trace above.
+
+Aborting.
+Aborted
