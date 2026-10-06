@@ -10,6 +10,54 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="CampusOS API", version="1.0.0")
 
+from starlette.middleware.base import BaseHTTPMiddleware
+from .core.database import SessionLocal
+from .models.engineering import AuditLog
+from jose import jwt
+from .core.security import SECRET_KEY, ALGORITHM
+
+class AuditMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        # Log critical actions (mutations)
+        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+            user_id = None
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+                try:
+                    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                    sub = payload.get("sub")
+                    if sub:
+                        user_id = int(sub)
+                except Exception:
+                    pass
+            
+            # Avoid logging login failures as NULL users unless needed, but it's fine.
+            # Skip if it's just an OPTIONS request, though we already filtered by method.
+            db = SessionLocal()
+            try:
+                ip = request.client.host if request.client else None
+                action_name = f"{request.method} {request.url.path}"
+                log = AuditLog(
+                    user_id=user_id,
+                    action=action_name,
+                    resource=request.url.path,
+                    ip_address=ip
+                )
+                db.add(log)
+                db.commit()
+            except Exception as e:
+                logger.error(f"Failed to write audit log: {e}")
+            finally:
+                db.close()
+                
+        return response
+
+app.add_middleware(AuditMiddleware)
+
+
 # Central error handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
