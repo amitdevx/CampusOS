@@ -48,3 +48,4 @@ pip-delete-this-directory.txt
 !*config.js
 !*config.mjs
 campusos.db
+backend/campus.db
