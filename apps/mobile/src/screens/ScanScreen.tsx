@@ -40,6 +40,9 @@ export default function ScanScreen() {
       if (mounted) setHasPermission(status === 'granted');
     });
   
+    return () => { mounted = false; };
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       // Reset scan state when screen comes into focus
@@ -49,9 +52,6 @@ export default function ScanScreen() {
       setErrorMsg('');
     }, [])
   );
-
-  return () => { mounted = false; };
-  }, []);
 
   const resetScan = () => {
     setScanned(false);
@@ -89,18 +89,7 @@ export default function ScanScreen() {
   };
 
   if (hasPermission === null) {
-  
-  useFocusEffect(
-    useCallback(() => {
-      // Reset scan state when screen comes into focus
-      setScanned(false);
-      setScanState('scanning');
-      setSuccessData(null);
-      setErrorMsg('');
-    }, [])
-  );
-
-  return (
+    return (
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionText}>Requesting camera permission...</Text>
       </View>
@@ -108,18 +97,7 @@ export default function ScanScreen() {
   }
 
   if (hasPermission === false) {
-  
-  useFocusEffect(
-    useCallback(() => {
-      // Reset scan state when screen comes into focus
-      setScanned(false);
-      setScanState('scanning');
-      setSuccessData(null);
-      setErrorMsg('');
-    }, [])
-  );
-
-  return (
+    return (
       <View style={styles.permissionContainer}>
         <View style={styles.permissionCard}>
           <Text style={styles.permissionTitle}>Camera Access Required</Text>
@@ -133,17 +111,6 @@ export default function ScanScreen() {
       </View>
     );
   }
-
-
-  useFocusEffect(
-    useCallback(() => {
-      // Reset scan state when screen comes into focus
-      setScanned(false);
-      setScanState('scanning');
-      setSuccessData(null);
-      setErrorMsg('');
-    }, [])
-  );
 
   return (
     <View style={styles.container}>

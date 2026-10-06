@@ -65,33 +65,54 @@ export default function StudentDashboardPage() {
           <div className="bg-white rounded-xl border border-dashed border-[#D4D4D8] p-8 text-center">
             <p className="text-sm text-[#71717A] font-medium">No classes scheduled for today.</p>
           </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-[#E4E4E7] shadow-sm overflow-hidden">
-            <div className="divide-y divide-[#F4F4F5]">
-              {schedule.map((session, i) => (
-                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 hover:bg-[#FAFAFA] transition-colors group">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-[#F4F4F5] rounded-lg flex items-center justify-center border border-[#E4E4E7] text-[#09090B] font-mono text-xs font-bold group-hover:border-[#09090B] transition-colors">
-                      {new Date(session.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).replace(' ', '\n')}
+        ) : (() => {
+          const todayDay = new Date().getDay();
+          let todayClasses = schedule.filter(s => new Date(s.start_time).getDay() === todayDay);
+          const seen = new Set();
+          todayClasses = todayClasses.filter(s => {
+            const time = new Date(s.start_time).toLocaleTimeString();
+            const key = `${s.subject_name}-${time}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+
+          if (todayClasses.length === 0) {
+            return (
+              <div className="bg-white rounded-xl border border-dashed border-[#D4D4D8] p-8 text-center">
+                <p className="text-sm text-[#71717A] font-medium">No classes scheduled for today.</p>
+              </div>
+            );
+          }
+
+          return (
+            <div className="bg-white rounded-xl border border-[#E4E4E7] shadow-sm overflow-hidden">
+              <div className="divide-y divide-[#F4F4F5]">
+                {todayClasses.map((session, i) => (
+                  <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 hover:bg-[#FAFAFA] transition-colors group">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-[#F4F4F5] rounded-lg flex items-center justify-center border border-[#E4E4E7] text-[#09090B] font-mono text-xs font-bold group-hover:border-[#09090B] transition-colors whitespace-pre-wrap text-center">
+                        {new Date(session.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).replace(' ', '\n')}
+                      </div>
+                      <div>
+                        <h4 className="text-base font-semibold text-[#09090B]">{session.subject_name || 'Unknown Subject'}</h4>
+                        <p className="text-[#71717A] text-sm mt-0.5 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                          Room {session.room}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-base font-semibold text-[#09090B]">{session.subject_name || 'Unknown Subject'}</h4>
-                      <p className="text-[#71717A] text-sm mt-0.5 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-                        Room {session.room}
-                      </p>
+                    <div className="mt-4 sm:mt-0 sm:text-right flex items-center sm:block gap-4">
+                      <span className="text-xs font-mono text-[#A1A1AA] bg-[#F4F4F5] px-2 py-1 rounded">
+                        {new Date(session.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
                   </div>
-                  <div className="mt-4 sm:mt-0 sm:text-right flex items-center sm:block gap-4">
-                    <span className="text-xs font-mono text-[#A1A1AA] bg-[#F4F4F5] px-2 py-1 rounded">
-                      {new Date(session.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
