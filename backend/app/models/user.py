@@ -29,11 +29,11 @@ class User(Base):
 class StudentProfile(Base):
     __tablename__ = "student_profiles"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, unique=True)
     enrollment_number = Column(String, unique=True, index=True, nullable=False)
     current_semester = Column(Integer, nullable=True)
-    department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
-    batch_id = Column(Integer, ForeignKey("batches.id"), nullable=True)
+    department_id = Column(Integer, ForeignKey("departments.id"), index=True, nullable=True)
+    batch_id = Column(Integer, ForeignKey("batches.id"), index=True, nullable=True)
     
     user = relationship("User", back_populates="student_profile")
     # relationships to Batch and Dept can be added if needed
@@ -41,9 +41,9 @@ class StudentProfile(Base):
 class StaffProfile(Base):
     __tablename__ = "staff_profiles"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, unique=True)
     employee_id = Column(String, unique=True, index=True, nullable=False)
     designation = Column(String, nullable=True)
-    department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
+    department_id = Column(Integer, ForeignKey("departments.id"), index=True, nullable=True)
     
     user = relationship("User", back_populates="staff_profile")

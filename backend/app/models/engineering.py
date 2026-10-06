@@ -7,7 +7,7 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Could be system action
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=True) # Could be system action
     action = Column(String, nullable=False) # e.g. "USER_LOGIN", "TIMETABLE_CREATED"
     resource = Column(String, nullable=True) # e.g. "/api/v1/timetable"
     details = Column(Text, nullable=True) # JSON or descriptive string

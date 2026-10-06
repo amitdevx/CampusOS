@@ -7,7 +7,7 @@ class Notification(Base):
     __tablename__ = "notifications"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     title = Column(String, nullable=False)
     message = Column(Text, nullable=False)
     type = Column(String, nullable=False) # e.g., "TIMETABLE_CHANGE", "NEW_ASSIGNMENT", "SYSTEM_ALERT"

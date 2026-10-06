@@ -6,9 +6,9 @@ from ..core.database import Base
 class Assignment(Base):
     __tablename__ = "assignments"
     id = Column(Integer, primary_key=True, index=True)
-    subject_id = Column(Integer, ForeignKey("subjects.id"))
-    division_id = Column(Integer, ForeignKey("divisions.id"), nullable=True)
-    teacher_id = Column(Integer, ForeignKey("users.id"))
+    subject_id = Column(Integer, ForeignKey("subjects.id"), index=True)
+    division_id = Column(Integer, ForeignKey("divisions.id"), index=True, nullable=True)
+    teacher_id = Column(Integer, ForeignKey("users.id"), index=True)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     deadline = Column(DateTime, nullable=False)
@@ -19,8 +19,8 @@ class Assignment(Base):
 class Submission(Base):
     __tablename__ = "submissions"
     id = Column(Integer, primary_key=True, index=True)
-    assignment_id = Column(Integer, ForeignKey("assignments.id"))
-    student_id = Column(Integer, ForeignKey("users.id"))
+    assignment_id = Column(Integer, ForeignKey("assignments.id"), index=True)
+    student_id = Column(Integer, ForeignKey("users.id"), index=True)
     file_url = Column(String, nullable=True)
     submitted_at = Column(DateTime, default=datetime.datetime.utcnow)
     marks = Column(Integer, nullable=True)
@@ -31,8 +31,8 @@ class Submission(Base):
 class Exam(Base):
     __tablename__ = "exams"
     id = Column(Integer, primary_key=True, index=True)
-    subject_id = Column(Integer, ForeignKey("subjects.id"))
-    division_id = Column(Integer, ForeignKey("divisions.id"), nullable=True)
+    subject_id = Column(Integer, ForeignKey("subjects.id"), index=True)
+    division_id = Column(Integer, ForeignKey("divisions.id"), index=True, nullable=True)
     title = Column(String, nullable=False)
     exam_date = Column(DateTime, nullable=False)
     total_marks = Column(Integer, nullable=False)
@@ -42,8 +42,8 @@ class Exam(Base):
 class ExamMark(Base):
     __tablename__ = "exam_marks"
     id = Column(Integer, primary_key=True, index=True)
-    exam_id = Column(Integer, ForeignKey("exams.id"))
-    student_id = Column(Integer, ForeignKey("users.id"))
+    exam_id = Column(Integer, ForeignKey("exams.id"), index=True)
+    student_id = Column(Integer, ForeignKey("users.id"), index=True)
     marks_obtained = Column(Integer, nullable=False)
     
     exam = relationship("Exam", back_populates="marks")
