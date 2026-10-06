@@ -66,8 +66,8 @@ export default function TeacherQRPage() {
 
   const qrData = sessionData ? JSON.stringify({
     type: 'ATTENDANCE',
-    session: parseInt(selectedClassId),
-    token: sessionData.secret_token,
+    session: sessionData.id,
+    token: sessionData.qr_code_secret,
   }) : '';
 
   return (

@@ -24,8 +24,8 @@ class AttendanceRecordBase(BaseModel):
     student_id: int
     status: str = "PRESENT"
 
-class AttendanceRecordCreate(AttendanceRecordBase):
-    qr_code_secret: Optional[str] = None # Used by student scanning the QR
+class AttendanceRecordCreate(BaseModel):
+    qr_code_secret: str # Used by student scanning the QR
 
 class AttendanceRecordResponse(AttendanceRecordBase):
     id: int

@@ -43,11 +43,7 @@ def run_tests():
         print(f"Teacher created QR Session: {session_id}")
         
         # Student scans QR
-        # We need the student's ID for the payload schema (even though backend infers it for security)
-        me_r = requests.get(f"{API_URL}/api/v1/auth/me", headers={"Authorization": f"Bearer {student_token}"})
-        student_id = me_r.json()["id"]
-        
-        scan_data = {"session_id": session_id, "qr_code_secret": qr_secret, "student_id": student_id}
+        scan_data = {"session_id": session_id, "qr_code_secret": qr_secret}
         r = requests.post(f"{API_URL}/api/v1/attendance/sessions/{session_id}/scan", json=scan_data, headers={"Authorization": f"Bearer {student_token}"})
         assert r.status_code == 200, f"Student scan failed {r.text}"
         print("Student successfully scanned QR: PASS")
