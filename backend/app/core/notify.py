@@ -35,7 +35,7 @@ async def send_notification(db: Session, user_ids: List[int], title: str, messag
                 "to": user.push_token,
                 "sound": "default", "title": title, "body": message,
                 "data": {"notification_id": notif.id, "type": notif_type},
-                "priority": "high"
+                "priority": "high", "channelId": "default"
             })
     
     db.commit()

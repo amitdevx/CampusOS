@@ -53,6 +53,17 @@ export default function ScanScreen() {
     }, [])
   );
 
+  useEffect(() => {
+    let timer;
+    if (scanState === 'success') {
+      timer = setTimeout(() => {
+        resetScan();
+        navigation.navigate('Home');
+      }, 5000); // auto-reset after 5 seconds so they don't get stuck
+    }
+    return () => clearTimeout(timer);
+  }, [scanState]);
+
   const resetScan = () => {
     setScanned(false);
     setScanState('scanning');

@@ -55,7 +55,8 @@ export function useCampusWebSocket() {
               
               const Notifications = await import('expo-notifications');
               await Notifications.scheduleNotificationAsync({
-                identifier: `notif-${notifData.id}`,
+                // Let Expo auto-generate identifier so they stack
+                // identifier: `notif-${notifData.id}`,
                 content: {
                   title: notifData.title || 'ResoSync',
                   body: notifData.message,

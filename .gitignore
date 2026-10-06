@@ -49,3 +49,10 @@ pip-delete-this-directory.txt
 !*config.mjs
 campusos.db
 backend/campus.db
+
+# Test Dumps and Tokens
+dumps_*.txt
+window_dump.xml
+*token*.json
+*token*.txt
+scripts/
