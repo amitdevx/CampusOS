@@ -8,7 +8,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { X, CheckCircle, Loader2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { markAttendance } from '@campusos/api-client';
@@ -38,7 +39,18 @@ export default function ScanScreen() {
     Camera.requestCameraPermissionsAsync().then(({ status }) => {
       if (mounted) setHasPermission(status === 'granted');
     });
-    return () => { mounted = false; };
+  
+  useFocusEffect(
+    useCallback(() => {
+      // Reset scan state when screen comes into focus
+      setScanned(false);
+      setScanState('scanning');
+      setSuccessData(null);
+      setErrorMsg('');
+    }, [])
+  );
+
+  return () => { mounted = false; };
   }, []);
 
   const resetScan = () => {
@@ -77,7 +89,18 @@ export default function ScanScreen() {
   };
 
   if (hasPermission === null) {
-    return (
+  
+  useFocusEffect(
+    useCallback(() => {
+      // Reset scan state when screen comes into focus
+      setScanned(false);
+      setScanState('scanning');
+      setSuccessData(null);
+      setErrorMsg('');
+    }, [])
+  );
+
+  return (
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionText}>Requesting camera permission...</Text>
       </View>
@@ -85,7 +108,18 @@ export default function ScanScreen() {
   }
 
   if (hasPermission === false) {
-    return (
+  
+  useFocusEffect(
+    useCallback(() => {
+      // Reset scan state when screen comes into focus
+      setScanned(false);
+      setScanState('scanning');
+      setSuccessData(null);
+      setErrorMsg('');
+    }, [])
+  );
+
+  return (
       <View style={styles.permissionContainer}>
         <View style={styles.permissionCard}>
           <Text style={styles.permissionTitle}>Camera Access Required</Text>
@@ -99,6 +133,17 @@ export default function ScanScreen() {
       </View>
     );
   }
+
+
+  useFocusEffect(
+    useCallback(() => {
+      // Reset scan state when screen comes into focus
+      setScanned(false);
+      setScanState('scanning');
+      setSuccessData(null);
+      setErrorMsg('');
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
@@ -155,7 +200,7 @@ export default function ScanScreen() {
             <Text style={styles.successTitle}>Attendance Marked</Text>
             <Text style={styles.successSubtitle}>Session #{successData.sessionId}</Text>
             <Text style={styles.successTime}>Marked at {successData.markedAt}</Text>
-            <TouchableOpacity style={styles.doneButton} onPress={() => navigation.goBack()}>
+            <TouchableOpacity style={styles.doneButton} onPress={() => { resetScan(); navigation.navigate('Home' as never); }}>
               <Text style={styles.doneButtonText}>Done</Text>
             </TouchableOpacity>
           </View>

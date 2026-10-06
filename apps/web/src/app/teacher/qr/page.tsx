@@ -41,7 +41,7 @@ export default function TeacherQRPage() {
       const fetchRecords = async () => {
         try {
           const { apiClient } = require('@campusos/api-client');
-          const res = await apiClient.get(`/api/v1/attendance/sessions/${selectedClassId}/records`);
+          const res = await apiClient.get(`/api/v1/attendance/sessions/${sessionData.id}/records`);
           setRecords(res.data || []);
         } catch(e) {}
       };
